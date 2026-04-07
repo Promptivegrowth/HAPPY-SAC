@@ -71,8 +71,16 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
     }, [isOpen, product])
 
     const fetchInitialData = async () => {
-        const { data } = await (supabase.from('categories') as any).select('*')
-        if (data) setCategories(data)
+        try {
+            const { data, error } = await (supabase.from('categories') as any).select('*').order('nombre')
+            if (error) {
+                console.error("Error fetching categories:", error.message)
+                return
+            }
+            if (data) setCategories(data)
+        } catch (e) {
+            console.error("Fetch exception:", e)
+        }
     }
 
     const handleSizeToggle = (talla: string) => {
@@ -107,9 +115,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
             // 1. Manejo de Tallas y Stock para productos nuevos
             if (!product) {
                 if (formData.tipo_item === 'PRODUCTO') {
-                    // Iteramos sobre las tallas seleccionadas
                     const sizesToCreate = Object.entries(selectedSizes)
-
                     for (const [talla, stock] of sizesToCreate) {
                         const { data: sizeData, error: sizeError } = await (supabase.from('product_sizes') as any)
                             .insert([{
@@ -132,7 +138,6 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                             continue
                         }
 
-                        // 2. Registro de Stock Inicial en Almacén Central
                         if (stock > 0 && sizeData) {
                             await (supabase.from('product_stock') as any).insert({
                                 product_size_id: sizeData.id,
@@ -144,12 +149,11 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                         }
                     }
                 } else {
-                    // Es un MATERIAL, el stock va directo a material_stock
                     const materialStock = selectedSizes['STD'] || 0
                     if (materialStock > 0) {
                         await (supabase.from('material_stock') as any).insert({
                             product_id: newProduct.id,
-                            warehouse_id: 'c9890ec9-1939-40c8-8be4-dabb0210cd03', // Almacén de Insumos
+                            warehouse_id: 'c9890ec9-1939-40c8-8be4-dabb0210cd03',
                             cantidad: materialStock,
                             tipo_movimiento: 'ENTRADA',
                             motivo: 'Stock inicial en creación'
@@ -172,6 +176,8 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
             setLoading(false)
         }
     }
+
+    if (!isOpen) return null
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
