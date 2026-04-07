@@ -39,7 +39,8 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
         nombre_web: "",
         precio_venta_base: 0,
         en_oferta: false,
-        precio_oferta: 0
+        precio_oferta: 0,
+        stock_inicial: 0
     })
 
     useEffect(() => {
@@ -61,14 +62,15 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                     nombre_web: "",
                     precio_venta_base: 0,
                     en_oferta: false,
-                    precio_oferta: 0
+                    precio_oferta: 0,
+                    stock_inicial: 0
                 })
             }
         }
     }, [isOpen, product])
 
     const fetchInitialData = async () => {
-        const { data } = await supabase.from('categories').select('*').eq('tipo', 'PRODUCTO')
+        const { data } = await (supabase.from('categories') as any).select('*').eq('tipo', 'PRODUCTO')
         if (data) setCategories(data)
     }
 
@@ -76,16 +78,76 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
         e.preventDefault()
         setLoading(true)
         try {
+            const { stock_inicial, ...dataToSave } = formData
             const table = supabase.from('products') as any
             const { data, error } = product
-                ? await table.update(formData).eq('id', product.id).select()
-                : await table.insert([formData]).select()
+                ? await table.update(dataToSave).eq('id', product.id).select()
+                : await table.insert([{ ...dataToSave, company_id: product?.company_id || null }]).select()
 
             if (error) throw error
-            onSave(data[0])
+            const newProduct = data[0]
+
+            // 1. Manejo de Tallas y Stock para productos nuevos
+            if (!product) {
+                if (formData.tipo_item === 'PRODUCTO') {
+                    // Creamos la talla por defecto manualmente para asegurar su existencia
+                    const { data: sizeData, error: sizeError } = await (supabase.from('product_sizes') as any)
+                        .insert([{
+                            product_id: newProduct.id,
+                            talla: 'STD',
+                            precio_venta: formData.precio_venta_base,
+                            precio_web: formData.precio_venta_base,
+                            precio_oferta: formData.precio_oferta,
+                            en_oferta: formData.en_oferta,
+                            activo: true,
+                            publicar_web: true,
+                            orden: 1,
+                            stock: stock_inicial // Opcional, pero mantendremos stock_movement como fuente de verdad
+                        }])
+                        .select()
+                        .single()
+
+                    if (sizeError) console.error("Error creating default size:", sizeError)
+
+                    // 2. Registro de Stock Inicial en Almacén Central
+                    if (stock_inicial > 0 && sizeData) {
+                        const { error: stockError } = await (supabase.from('product_stock') as any).insert({
+                            product_size_id: sizeData.id,
+                            warehouse_id: 'edefaec8-15fd-4327-8069-2bde7e67ce48',
+                            cantidad: stock_inicial,
+                            tipo_movimiento: 'ENTRADA',
+                            motivo: 'Stock inicial en creación'
+                        })
+                        if (stockError) console.error("Error creating initial stock movement:", stockError)
+                    }
+                } else {
+                    // Es un MATERIAL, el stock va directo a material_stock
+                    if (stock_inicial > 0) {
+                        const { error: stockError } = await (supabase.from('material_stock') as any).insert({
+                            product_id: newProduct.id,
+                            warehouse_id: 'c9890ec9-1939-40c8-8be4-dabb0210cd03', // Almacén de Insumos
+                            cantidad: stock_inicial,
+                            tipo_movimiento: 'ENTRADA',
+                            motivo: 'Stock inicial en creación'
+                        })
+                        if (stockError) console.error("Error creating initial material stock:", stockError)
+                    }
+                }
+            }
+
+            // Para que aparezca en la lista sin refrescar, mockeamos lo que la vista esperaría
+            const itemForList = {
+                ...newProduct,
+                stock: stock_inicial,
+                talla: formData.tipo_item === 'PRODUCTO' ? 'STD' : null,
+                clasificacion: categories.find(c => c.id === formData.categoria_id)?.nombre || 'General'
+            }
+
+            onSave(itemForList)
             onClose()
         } catch (error) {
             console.error("Error saving product:", error)
+            alert("No se pudo guardar: " + (error as any).message)
         } finally {
             setLoading(false)
         }
@@ -107,11 +169,36 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                 <Package size={24} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-black text-slate-900 tracking-tight">{product ? 'Editar Producto' : 'Nuevo Producto'}</h2>
+                                <h2 className="text-xl font-black text-slate-900 tracking-tight">{product ? 'Editar Item' : 'Nuevo Item'}</h2>
                                 <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Información Técnica e Integración Web</p>
                             </div>
                         </div>
-                        <button type="button" onClick={onClose} className="p-3 hover:bg-slate-100 rounded-2xl transition-colors">
+
+                        {/* Tipo de Item Toggle */}
+                        <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl gap-1">
+                            <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, tipo_item: 'PRODUCTO' })}
+                                className={cn(
+                                    "px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all",
+                                    formData.tipo_item === 'PRODUCTO' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                Producto
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, tipo_item: 'MATERIAL' })}
+                                className={cn(
+                                    "px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all",
+                                    formData.tipo_item === 'MATERIAL' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                Material
+                            </button>
+                        </div>
+
+                        <button type="button" onClick={onClose} className="p-3 hover:bg-slate-100 rounded-2xl transition-colors text-slate-900">
                             {/* @ts-ignore */}
                             <X size={20} className="text-slate-400" />
                         </button>
@@ -128,12 +215,12 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Nombre del Producto</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Nombre del Item</label>
                                     <input
                                         required
                                         value={formData.nombre}
                                         onChange={e => setFormData({ ...formData, nombre: e.target.value })}
-                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner"
+                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner text-slate-900"
                                         placeholder="Ej: Spiderman Kid Premium"
                                     />
                                 </div>
@@ -143,7 +230,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                         required
                                         value={formData.codigo}
                                         onChange={e => setFormData({ ...formData, codigo: e.target.value })}
-                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-mono focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner uppercase"
+                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-mono focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner uppercase text-slate-900"
                                         placeholder="HS-SPID-01"
                                     />
                                 </div>
@@ -152,12 +239,41 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                     <select
                                         value={formData.categoria_id}
                                         onChange={e => setFormData({ ...formData, categoria_id: e.target.value })}
-                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner"
+                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner text-slate-900"
                                     >
                                         <option value="">Seleccionar...</option>
                                         {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
                                     </select>
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Precio de Venta (Base)</label>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">S/</div>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={formData.precio_venta_base}
+                                            onChange={e => setFormData({ ...formData, precio_venta_base: parseFloat(e.target.value) })}
+                                            className="w-full pl-10 pr-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-black focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner text-slate-900"
+                                        />
+                                    </div>
+                                </div>
+                                {!product && (
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-pink-600 tracking-wider">Stock Inicial</label>
+                                        <div className="relative">
+                                            {/* @ts-ignore */}
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-600"><Hash size={14} /></div>
+                                            <input
+                                                type="number"
+                                                value={formData.stock_inicial}
+                                                onChange={e => setFormData({ ...formData, stock_inicial: parseInt(e.target.value) })}
+                                                className="w-full pl-10 pr-5 py-3.5 bg-pink-50 border border-pink-100 rounded-2xl text-sm font-black text-pink-600 focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </section>
 
@@ -207,16 +323,10 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Precio Web base</label>
-                                        <div className="relative">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">S/</div>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                value={formData.precio_venta_base}
-                                                onChange={e => setFormData({ ...formData, precio_venta_base: parseFloat(e.target.value) })}
-                                                className="w-full pl-10 pr-5 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-sm font-black focus:ring-4 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all"
-                                            />
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Precio Sincronizado</label>
+                                        <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between">
+                                            <span className="text-xs font-bold text-slate-400 tracking-tight">Vínculo al base</span>
+                                            <span className="text-lg font-accent font-bold text-pink-500">S/ {formData.precio_venta_base}</span>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
@@ -259,13 +369,14 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                         </button>
                         <button
                             disabled={loading}
+                            type="submit"
                             className="px-8 py-3.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 shadow-xl active:scale-95"
                         >
                             {/* @ts-ignore */}
                             {loading && <Loader2 className="animate-spin" size={18} />}
                             {/* @ts-ignore */}
                             {!loading && <Save size={18} />}
-                            {product ? 'GUARDAR ACTUALIZACIÓN' : 'CREAR PRODUCTO'}
+                            {product ? 'GUARDAR ACTUALIZACIÓN' : 'CREAR ITEM'}
                         </button>
                     </div>
                 </form>

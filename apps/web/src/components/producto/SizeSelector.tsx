@@ -10,6 +10,8 @@ interface Size {
     id: string
     talla: string
     precio_web: number
+    en_oferta?: boolean
+    precio_oferta?: number
     stock?: number
 }
 
@@ -100,9 +102,21 @@ export function SizeSelector({ sizes, productId, onSelect }: SizeSelectorProps) 
                             )}>
                                 {size.talla}
                             </span>
-                            <span className="text-[10px] font-black tracking-tighter text-slate-400">
-                                {formatPrecio(size.precio_web)}
+                            <span className={cn(
+                                "text-[10px] font-black tracking-tighter",
+                                size.en_oferta ? "text-pink-500" : "text-slate-400"
+                            )}>
+                                {formatPrecio(size.en_oferta ? (size.precio_oferta || 0) : size.precio_web)}
                             </span>
+
+                            {stock > 0 && (
+                                <span className={cn(
+                                    "mt-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter",
+                                    stock < 5 ? "bg-orange-100 text-orange-600" : "bg-green-100 text-green-600"
+                                )}>
+                                    {stock} disponibles
+                                </span>
+                            )}
 
                             {isSelected && (
                                 <motion.div

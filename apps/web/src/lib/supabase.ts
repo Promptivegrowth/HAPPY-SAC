@@ -59,7 +59,10 @@ export async function getProductoPorSlug(slug: string) {
         talla, 
         precio_web, 
         activo, 
-        publicar_web
+        publicar_web,
+        en_oferta,
+        precio_oferta,
+        stock
       )
     `)
     .eq('slug', slug)

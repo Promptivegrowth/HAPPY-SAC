@@ -17,6 +17,7 @@ export function ProductCard({ product }: ProductCardProps) {
     const basePrice = precioDesde(product.product_sizes)
     const hasOffer = product.product_sizes?.some((s: any) => s.en_oferta)
     const originalPrice = product.product_sizes?.[0]?.precio_web || 0
+    const totalStock = product.product_sizes?.reduce((acc: number, s: any) => acc + (s.stock || 0), 0) || 0
 
     const handleQuickAdd = (e: React.MouseEvent) => {
         e.preventDefault()
@@ -94,19 +95,30 @@ export function ProductCard({ product }: ProductCardProps) {
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[--text-muted]">
                         {product.categories?.nombre || 'General'}
                     </p>
-                    <div className="pt-2 flex items-baseline gap-2">
-                        {hasOffer && (
-                            <span className="text-sm font-bold text-slate-400 line-through">
-                                {formatPrecio(originalPrice)}
+                    <div className="pt-2 flex items-center justify-between gap-2">
+                        <div className="flex items-baseline gap-2">
+                            {hasOffer && (
+                                <span className="text-sm font-bold text-slate-400 line-through">
+                                    {formatPrecio(originalPrice)}
+                                </span>
+                            )}
+                            <span className={cn(
+                                "font-accent text-lg font-bold",
+                                hasOffer ? "text-[--brand-primary]" : "text-[--brand-secondary]"
+                            )}>
+                                {formatPrecio(basePrice)}
                             </span>
-                        )}
-                        <span className={cn(
-                            "font-accent text-2xl",
-                            hasOffer ? "text-[--brand-primary]" : "text-[--brand-secondary]"
+                        </div>
+
+                        {/* Stock Badge */}
+                        <div className={cn(
+                            "px-2 py-0.5 rounded-md border text-[8px] font-black uppercase tracking-tight",
+                            totalStock > 0
+                                ? "bg-green-50 border-green-200 text-green-600"
+                                : "bg-red-50 border-red-200 text-red-600 shadow-sm"
                         )}>
-                            {formatPrecio(basePrice)}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-400">PVP web</span>
+                            {totalStock > 0 ? `${totalStock} en stock` : 'Agotado'}
+                        </div>
                     </div>
                 </div>
             </Link>

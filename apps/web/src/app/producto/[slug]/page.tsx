@@ -47,9 +47,9 @@ export default function ProductDetailPage() {
             codigo: product.codigo,
             nombre: product.nombre_web || product.nombre,
             talla: selectedSize.talla,
-            precio: selectedSize.precio_web || 0,
+            precio: selectedSize.en_oferta ? selectedSize.precio_oferta : (selectedSize.precio_web || 0),
             imagen_url: product.imagen_url || (product.imagenes_urls ? product.imagenes_urls[0] : ''),
-            stock_disponible: selectedSize.stock || 10
+            stock_disponible: selectedSize.stock || 0
         })
 
         toast.success('¡Agregado al carrito!')
