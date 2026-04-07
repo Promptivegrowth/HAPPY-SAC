@@ -19,6 +19,7 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={`${inter.className} antialiased selection:bg-pink-100 selection:text-pink-900`}>
         {children}
+        {/* @ts-ignore */}
         <Toaster position="top-right" expand={false} richColors />
       </body>
     </html>

@@ -58,6 +58,7 @@ export default function LoginPage() {
                                 Correo Electrónico
                             </label>
                             <div className="relative group">
+                                {/* @ts-ignore */}
                                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-pink-500 transition-colors" />
                                 <input
                                     id="email"
@@ -76,6 +77,7 @@ export default function LoginPage() {
                                 Contraseña
                             </label>
                             <div className="relative group">
+                                {/* @ts-ignore */}
                                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-pink-500 transition-colors" />
                                 <input
                                     id="password"
@@ -102,10 +104,12 @@ export default function LoginPage() {
                             className="w-full bg-slate-900 text-white rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 hover:bg-slate-800 active:scale-[0.98] transition-all shadow-lg shadow-slate-900/10 disabled:opacity-70 disabled:active:scale-100"
                         >
                             {isLoading ? (
+                                /* @ts-ignore */
                                 <Loader2 className="h-5 w-5 animate-spin" />
                             ) : (
                                 <>
                                     Iniciar Sesión
+                                    {/* @ts-ignore */}
                                     <ArrowRight className="h-5 w-5" />
                                 </>
                             )}

@@ -3,7 +3,7 @@ import Link from "next/link"
 import { ArrowRight, ShoppingCart, Star, Heart } from "lucide-react"
 
 export default async function HomePage() {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Obtenemos los productos destacados (featured)
   const { data: featuredProducts } = await supabase

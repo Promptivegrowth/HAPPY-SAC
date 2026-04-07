@@ -19,7 +19,7 @@ interface ProductPageProps {
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Obtenemos el producto y sus tallas
     const { data: product } = await supabase

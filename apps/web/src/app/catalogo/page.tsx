@@ -10,7 +10,7 @@ interface CatalogPageProps {
 }
 
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const activeCategory = searchParams.category
 
     // Obtenemos categorías para el filtro

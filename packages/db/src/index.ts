@@ -1,6 +1,7 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
 
+export type { Database }
 export * from './database.types'
 
 export type Rol = 'SUPERADMIN' | 'ADMIN' | 'PRODUCCION_JEFE' | 'PRODUCCION_OP' | 'VENTAS' | 'ALMACEN' | 'COMPRAS' | 'CONTABILIDAD' | 'GERENCIA' | 'SOLO_LECTURA'
