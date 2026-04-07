@@ -265,6 +265,111 @@ export interface Database {
                     simbolo?: string
                 }
             }
+            suppliers: {
+                Row: {
+                    id: string
+                    nombre_comercial: string
+                    razon_social: string | null
+                    ruc: string
+                    contacto_nombre: string | null
+                    contacto_telefono: string | null
+                    email: string | null
+                    direccion: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    nombre_comercial: string
+                    razon_social?: string | null
+                    ruc: string
+                    contacto_nombre?: string | null
+                    contacto_telefono?: string | null
+                    email?: string | null
+                    direccion?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    nombre_comercial?: string
+                    razon_social?: string | null
+                    ruc?: string
+                    contacto_nombre?: string | null
+                    contacto_telefono?: string | null
+                    email?: string | null
+                    direccion?: string | null
+                    created_at?: string
+                }
+            }
+            pos_sessions: {
+                Row: {
+                    id: string
+                    user_id: string
+                    fecha_apertura: string
+                    fecha_cierre: string | null
+                    monto_inicial: number
+                    monto_final: number | null
+                    estado: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    fecha_apertura?: string
+                    fecha_cierre?: string | null
+                    monto_inicial: number
+                    monto_final?: number | null
+                    estado?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    fecha_apertura?: string
+                    fecha_cierre?: string | null
+                    monto_inicial?: number
+                    monto_final?: number | null
+                    estado?: string
+                }
+            }
+            erp_settings: {
+                Row: {
+                    id: string
+                    company_name: string
+                    ruc: string | null
+                    direccion: string | null
+                    telefono: string | null
+                    logo_url: string | null
+                    sunat_username: string | null
+                    sunat_password: string | null
+                    sunat_endpoint: string | null
+                    whatsapp_number: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    company_name: string
+                    ruc?: string | null
+                    direccion?: string | null
+                    telefono?: string | null
+                    logo_url?: string | null
+                    sunat_username?: string | null
+                    sunat_password?: string | null
+                    sunat_endpoint?: string | null
+                    whatsapp_number?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    company_name?: string
+                    ruc?: string | null
+                    direccion?: string | null
+                    telefono?: string | null
+                    logo_url?: string | null
+                    sunat_username?: string | null
+                    sunat_password?: string | null
+                    sunat_endpoint?: string | null
+                    whatsapp_number?: string | null
+                    created_at?: string
+                }
+            }
         }
         Views: {
             v_stock_actual: {

@@ -20,6 +20,7 @@ import { useState } from "react"
 
 const sidebarItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Punto de Venta", href: "/pos", icon: ShoppingCart },
     { name: "Inventario", href: "/inventory", icon: Package },
     { name: "Producción", href: "/production", icon: Factory },
     { name: "Ventas", href: "/sales", icon: ShoppingCart },
