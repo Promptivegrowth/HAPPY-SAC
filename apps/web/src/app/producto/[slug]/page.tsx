@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Truck, ShieldCheck, Award, ShoppingBag, Plus, Minus, MessageCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { ProductGallery } from '@/components/producto/ProductGallery'
 import { SizeSelector } from '@/components/producto/SizeSelector'
 import { getProductoPorSlug } from '@/lib/supabase'
@@ -96,8 +97,16 @@ export default function ProductDetailPage() {
 
                         <div className="space-y-4">
                             <div className="flex items-baseline gap-4">
-                                <span className="text-5xl font-accent text-[--brand-secondary]">
-                                    {formatPrecio(currentPrice)}
+                                {selectedSize?.en_oferta && (
+                                    <span className="text-2xl font-bold text-slate-400 line-through">
+                                        {formatPrecio(selectedSize.precio_web)}
+                                    </span>
+                                )}
+                                <span className={cn(
+                                    "text-5xl font-accent",
+                                    selectedSize?.en_oferta ? "text-[--brand-primary]" : "text-[--brand-secondary]"
+                                )}>
+                                    {formatPrecio(selectedSize?.en_oferta ? selectedSize.precio_oferta : currentPrice)}
                                 </span>
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                                     Inc. IGV (Factura disponible)

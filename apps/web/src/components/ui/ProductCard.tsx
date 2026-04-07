@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Plus, ShoppingBag, Eye } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { formatPrecio, precioDesde } from '@/lib/format'
 import { useCartStore } from '@/lib/cart-store'
 import { toast } from 'sonner'
@@ -14,14 +15,14 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
     const addItem = useCartStore(s => s.addItem)
     const basePrice = precioDesde(product.product_sizes)
-    const hasPromotions = product.featured // Usar promodion logic luego
+    const hasOffer = product.product_sizes?.some((s: any) => s.en_oferta)
+    const originalPrice = product.product_sizes?.[0]?.precio_web || 0
 
     const handleQuickAdd = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
 
-        // Si tiene tallas, elegimos la primera disponible para el "Quick Add"
-        const firstSize = product.product_sizes?.find((s: any) => s.activo && s.publicar_web)
+        const firstSize = product.product_sizes?.find((s: any) => s.activo && s.publicar_web && (s.stock || 0) > 0)
 
         if (firstSize) {
             addItem({
@@ -31,11 +32,13 @@ export function ProductCard({ product }: ProductCardProps) {
                 codigo: product.codigo,
                 nombre: product.nombre_web || product.nombre,
                 talla: firstSize.talla,
-                precio: firstSize.precio_web || 0,
+                precio: firstSize.en_oferta ? firstSize.precio_oferta : (firstSize.precio_web || 0),
                 imagen_url: product.imagen_url || (product.imagenes_urls ? product.imagenes_urls[0] : ''),
-                stock_disponible: 10 // Mock stock
+                stock_disponible: firstSize.stock || 0
             })
             toast.success('¡Agregado al carrito!')
+        } else {
+            toast.error('Sin stock disponible')
         }
     }
 
@@ -56,9 +59,14 @@ export function ProductCard({ product }: ProductCardProps) {
                     />
 
                     {/* Promo Badge */}
-                    {hasPromotions && (
+                    {hasOffer && (
+                        <div className="absolute top-4 left-4 bg-[--error] text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg z-10">
+                            OFERTA
+                        </div>
+                    )}
+                    {product.featured && !hasOffer && (
                         <div className="absolute top-4 left-4 bg-[--brand-primary] text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg z-10">
-                            MÁS VENDIDO
+                            DESTACADO
                         </div>
                     )}
 
@@ -87,10 +95,18 @@ export function ProductCard({ product }: ProductCardProps) {
                         {product.categories?.nombre || 'General'}
                     </p>
                     <div className="pt-2 flex items-baseline gap-2">
-                        <span className="font-accent text-2xl text-[--brand-secondary]">
+                        {hasOffer && (
+                            <span className="text-sm font-bold text-slate-400 line-through">
+                                {formatPrecio(originalPrice)}
+                            </span>
+                        )}
+                        <span className={cn(
+                            "font-accent text-2xl",
+                            hasOffer ? "text-[--brand-primary]" : "text-[--brand-secondary]"
+                        )}>
                             {formatPrecio(basePrice)}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-400">PVP aprox.</span>
+                        <span className="text-[10px] font-bold text-slate-400">PVP web</span>
                     </div>
                 </div>
             </Link>

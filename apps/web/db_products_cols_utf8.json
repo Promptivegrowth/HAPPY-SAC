@@ -1,0 +1,89 @@
+﻿{
+    "value":  [
+                  {
+                      "column_name":  "id"
+                  },
+                  {
+                      "column_name":  "company_id"
+                  },
+                  {
+                      "column_name":  "codigo"
+                  },
+                  {
+                      "column_name":  "nombre"
+                  },
+                  {
+                      "column_name":  "nombre_web"
+                  },
+                  {
+                      "column_name":  "categoria_id"
+                  },
+                  {
+                      "column_name":  "descripcion"
+                  },
+                  {
+                      "column_name":  "descripcion_web"
+                  },
+                  {
+                      "column_name":  "tags_web"
+                  },
+                  {
+                      "column_name":  "imagen_url"
+                  },
+                  {
+                      "column_name":  "imagenes_urls"
+                  },
+                  {
+                      "column_name":  "precio_venta_base"
+                  },
+                  {
+                      "column_name":  "codigo_barras"
+                  },
+                  {
+                      "column_name":  "publicar_web"
+                  },
+                  {
+                      "column_name":  "activo"
+                  },
+                  {
+                      "column_name":  "featured"
+                  },
+                  {
+                      "column_name":  "slug"
+                  },
+                  {
+                      "column_name":  "meta_title"
+                  },
+                  {
+                      "column_name":  "meta_description"
+                  },
+                  {
+                      "column_name":  "created_at"
+                  },
+                  {
+                      "column_name":  "updated_at"
+                  },
+                  {
+                      "column_name":  "created_by"
+                  },
+                  {
+                      "column_name":  "is_web_enabled"
+                  },
+                  {
+                      "column_name":  "web_price"
+                  },
+                  {
+                      "column_name":  "promo_price"
+                  },
+                  {
+                      "column_name":  "en_oferta"
+                  },
+                  {
+                      "column_name":  "precio_oferta"
+                  },
+                  {
+                      "column_name":  "tipo_item"
+                  }
+              ],
+    "Count":  28
+}

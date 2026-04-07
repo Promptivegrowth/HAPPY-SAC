@@ -13,5 +13,5 @@ export function formatTalla(talla: string): string {
 
 export function precioDesde(tallas: any[]): number {
     if (!tallas || tallas.length === 0) return 0
-    return Math.min(...tallas.map(t => t.precio_web || 0))
+    return Math.min(...tallas.map(t => (t.en_oferta ? t.precio_oferta : t.precio_web) || 0))
 }

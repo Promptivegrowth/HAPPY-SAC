@@ -29,7 +29,9 @@ export async function getProductosPublicos() {
         talla, 
         precio_web, 
         activo, 
-        publicar_web
+        publicar_web,
+        en_oferta,
+        precio_oferta
       )
     `)
     .eq('publicar_web', true)
