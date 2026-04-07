@@ -29,19 +29,20 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
     const supabase = createClient()
     const [loading, setLoading] = useState(false)
     const [categories, setCategories] = useState<any[]>([])
+    const [selectedSizes, setSelectedSizes] = useState<Record<string, number>>({ 'STD': 0 })
     const [formData, setFormData] = useState<any>({
         nombre: "",
         codigo: "",
         categoria_id: "",
         tipo_item: "PRODUCTO",
-        // Web Sync Fields
         publicar_web: false,
         nombre_web: "",
         precio_venta_base: 0,
         en_oferta: false,
-        precio_oferta: 0,
-        stock_inicial: 0
+        precio_oferta: 0
     })
+
+    const STANDARD_SIZES = ["4", "6", "8", "10", "12", "14", "16", "S", "M", "L", "XL", "STD"]
 
     useEffect(() => {
         if (isOpen) {
@@ -62,23 +63,39 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                     nombre_web: "",
                     precio_venta_base: 0,
                     en_oferta: false,
-                    precio_oferta: 0,
-                    stock_inicial: 0
+                    precio_oferta: 0
                 })
+                setSelectedSizes({ 'STD': 0 })
             }
         }
     }, [isOpen, product])
 
     const fetchInitialData = async () => {
-        const { data } = await (supabase.from('categories') as any).select('*').eq('tipo', 'PRODUCTO')
+        const { data } = await (supabase.from('categories') as any).select('*')
         if (data) setCategories(data)
+    }
+
+    const handleSizeToggle = (talla: string) => {
+        setSelectedSizes(prev => {
+            const next = { ...prev }
+            if (talla in next) {
+                delete next[talla]
+            } else {
+                next[talla] = 0
+            }
+            return next
+        })
+    }
+
+    const handleSizeStockChange = (talla: string, stock: number) => {
+        setSelectedSizes(prev => ({ ...prev, [talla]: stock }))
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
         try {
-            const { stock_inicial, ...dataToSave } = formData
+            const dataToSave = { ...formData }
             const table = supabase.from('products') as any
             const { data, error } = product
                 ? await table.update(dataToSave).eq('id', product.id).select()
@@ -90,60 +107,63 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
             // 1. Manejo de Tallas y Stock para productos nuevos
             if (!product) {
                 if (formData.tipo_item === 'PRODUCTO') {
-                    // Creamos la talla por defecto manualmente para asegurar su existencia
-                    const { data: sizeData, error: sizeError } = await (supabase.from('product_sizes') as any)
-                        .insert([{
-                            product_id: newProduct.id,
-                            talla: 'STD',
-                            precio_venta: formData.precio_venta_base,
-                            precio_web: formData.precio_venta_base,
-                            precio_oferta: formData.precio_oferta,
-                            en_oferta: formData.en_oferta,
-                            activo: true,
-                            publicar_web: true,
-                            orden: 1,
-                            stock: stock_inicial // Opcional, pero mantendremos stock_movement como fuente de verdad
-                        }])
-                        .select()
-                        .single()
+                    // Iteramos sobre las tallas seleccionadas
+                    const sizesToCreate = Object.entries(selectedSizes)
 
-                    if (sizeError) console.error("Error creating default size:", sizeError)
+                    for (const [talla, stock] of sizesToCreate) {
+                        const { data: sizeData, error: sizeError } = await (supabase.from('product_sizes') as any)
+                            .insert([{
+                                product_id: newProduct.id,
+                                talla: talla,
+                                precio_venta: formData.precio_venta_base,
+                                precio_web: formData.precio_venta_base,
+                                precio_oferta: formData.precio_oferta,
+                                en_oferta: formData.en_oferta,
+                                activo: true,
+                                publicar_web: true,
+                                orden: 1,
+                                stock: stock
+                            }])
+                            .select()
+                            .single()
 
-                    // 2. Registro de Stock Inicial en Almacén Central
-                    if (stock_inicial > 0 && sizeData) {
-                        const { error: stockError } = await (supabase.from('product_stock') as any).insert({
-                            product_size_id: sizeData.id,
-                            warehouse_id: 'edefaec8-15fd-4327-8069-2bde7e67ce48',
-                            cantidad: stock_inicial,
-                            tipo_movimiento: 'ENTRADA',
-                            motivo: 'Stock inicial en creación'
-                        })
-                        if (stockError) console.error("Error creating initial stock movement:", stockError)
+                        if (sizeError) {
+                            console.error(`Error creating size ${talla}:`, sizeError)
+                            continue
+                        }
+
+                        // 2. Registro de Stock Inicial en Almacén Central
+                        if (stock > 0 && sizeData) {
+                            await (supabase.from('product_stock') as any).insert({
+                                product_size_id: sizeData.id,
+                                warehouse_id: 'edefaec8-15fd-4327-8069-2bde7e67ce48',
+                                cantidad: stock,
+                                tipo_movimiento: 'ENTRADA',
+                                motivo: 'Stock inicial en creación'
+                            })
+                        }
                     }
                 } else {
                     // Es un MATERIAL, el stock va directo a material_stock
-                    if (stock_inicial > 0) {
-                        const { error: stockError } = await (supabase.from('material_stock') as any).insert({
+                    const materialStock = selectedSizes['STD'] || 0
+                    if (materialStock > 0) {
+                        await (supabase.from('material_stock') as any).insert({
                             product_id: newProduct.id,
                             warehouse_id: 'c9890ec9-1939-40c8-8be4-dabb0210cd03', // Almacén de Insumos
-                            cantidad: stock_inicial,
+                            cantidad: materialStock,
                             tipo_movimiento: 'ENTRADA',
                             motivo: 'Stock inicial en creación'
                         })
-                        if (stockError) console.error("Error creating initial material stock:", stockError)
                     }
                 }
             }
 
-            // Para que aparezca en la lista sin refrescar, mockeamos lo que la vista esperaría
-            const itemForList = {
+            const totalStock = Object.values(selectedSizes).reduce((a, b) => a + b, 0)
+            onSave({
                 ...newProduct,
-                stock: stock_inicial,
-                talla: formData.tipo_item === 'PRODUCTO' ? 'STD' : null,
+                stock: totalStock,
                 clasificacion: categories.find(c => c.id === formData.categoria_id)?.nombre || 'General'
-            }
-
-            onSave(itemForList)
+            })
             onClose()
         } catch (error) {
             console.error("Error saving product:", error)
@@ -152,8 +172,6 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
             setLoading(false)
         }
     }
-
-    if (!isOpen) return null
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -214,13 +232,13 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                 Datos Generales
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div className="space-y-2">
+                                <div className="space-y-2 lg:col-span-2">
                                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Nombre del Item</label>
                                     <input
                                         required
                                         value={formData.nombre}
                                         onChange={e => setFormData({ ...formData, nombre: e.target.value })}
-                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner text-slate-900"
+                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner text-slate-900 font-bold"
                                         placeholder="Ej: Spiderman Kid Premium"
                                     />
                                 </div>
@@ -230,19 +248,22 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                         required
                                         value={formData.codigo}
                                         onChange={e => setFormData({ ...formData, codigo: e.target.value })}
-                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-mono focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner uppercase text-slate-900"
+                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-mono focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner uppercase text-slate-900 font-bold"
                                         placeholder="HS-SPID-01"
                                     />
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-2 lg:col-span-2">
                                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Categoría</label>
                                     <select
+                                        required
                                         value={formData.categoria_id}
                                         onChange={e => setFormData({ ...formData, categoria_id: e.target.value })}
-                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner text-slate-900"
+                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner text-slate-900 font-bold"
                                     >
                                         <option value="">Seleccionar...</option>
-                                        {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div className="space-y-2">
@@ -258,24 +279,75 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                         />
                                     </div>
                                 </div>
-                                {!product && (
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase text-pink-600 tracking-wider">Stock Inicial</label>
+                            </div>
+                        </section>
+
+                        {/* Tallas y Stock */}
+                        {!product && (
+                            <section className="space-y-6">
+                                <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    {/* @ts-ignore */}
+                                    <Box size={16} className="text-slate-300" />
+                                    {formData.tipo_item === 'PRODUCTO' ? 'Tallas y Stock Inicial' : 'Stock Inicial'}
+                                </h3>
+
+                                {formData.tipo_item === 'PRODUCTO' ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                                        {STANDARD_SIZES.map(talla => {
+                                            const isSelected = talla in selectedSizes
+                                            return (
+                                                <div
+                                                    key={talla}
+                                                    className={cn(
+                                                        "p-4 rounded-3xl border transition-all flex flex-col gap-3",
+                                                        isSelected ? "bg-pink-50 border-pink-200" : "bg-slate-50 border-slate-100"
+                                                    )}
+                                                >
+                                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isSelected}
+                                                            onChange={() => handleSizeToggle(talla)}
+                                                            className="w-4 h-4 accent-pink-600 rounded"
+                                                        />
+                                                        <span className={cn(
+                                                            "text-sm font-black transition-colors",
+                                                            isSelected ? "text-pink-600" : "text-slate-400 group-hover:text-slate-600"
+                                                        )}>
+                                                            T:{talla}
+                                                        </span>
+                                                    </label>
+                                                    {isSelected && (
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={selectedSizes[talla]}
+                                                            onChange={e => handleSizeStockChange(talla, parseInt(e.target.value) || 0)}
+                                                            className="w-full px-3 py-2 bg-white border border-pink-200 rounded-xl text-xs font-black text-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                                                            placeholder="Stock"
+                                                        />
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="max-w-xs space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Cantidad de Ingreso</label>
                                         <div className="relative">
-                                            {/* @ts-ignore */}
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-600"><Hash size={14} /></div>
                                             <input
                                                 type="number"
-                                                value={formData.stock_inicial}
-                                                onChange={e => setFormData({ ...formData, stock_inicial: parseInt(e.target.value) })}
+                                                value={selectedSizes['STD'] || 0}
+                                                onChange={e => setSelectedSizes({ 'STD': parseInt(e.target.value) || 0 })}
                                                 className="w-full pl-10 pr-5 py-3.5 bg-pink-50 border border-pink-100 rounded-2xl text-sm font-black text-pink-600 focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner"
                                                 placeholder="0"
                                             />
                                         </div>
                                     </div>
                                 )}
-                            </div>
-                        </section>
+                            </section>
+                        )}
 
                         {/* Integración Web */}
                         <section className="bg-slate-900 rounded-[2.5rem] p-4 text-white shadow-2xl shadow-slate-900/20">
@@ -292,7 +364,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl">
-                                        <span className="text-xs font-bold text-slate-400 ml-2">¿PUBLICAR EN WEB?</span>
+                                        <span className="text-xs font-bold text-slate-400 ml-2 uppercase tracking-tighter">¿Publicar en web?</span>
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, publicar_web: !formData.publicar_web })}
@@ -318,16 +390,9 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                         <input
                                             value={formData.nombre_web}
                                             onChange={e => setFormData({ ...formData, nombre_web: e.target.value })}
-                                            className="w-full px-5 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-sm focus:ring-4 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all"
+                                            className="w-full px-5 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-sm focus:ring-4 focus:ring-pink-500/20 focus:border-pink-500 outline-none transition-all font-bold"
                                             placeholder="Nombre marketinero para la tienda..."
                                         />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Precio Sincronizado</label>
-                                        <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between">
-                                            <span className="text-xs font-bold text-slate-400 tracking-tight">Vínculo al base</span>
-                                            <span className="text-lg font-accent font-bold text-pink-500">S/ {formData.precio_venta_base}</span>
-                                        </div>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Promoción</label>

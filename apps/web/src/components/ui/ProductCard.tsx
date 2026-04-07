@@ -112,9 +112,9 @@ export function ProductCard({ product }: ProductCardProps) {
 
                         {/* Stock Badge */}
                         <div className={cn(
-                            "px-2 py-0.5 rounded-md border text-[8px] font-black uppercase tracking-tight",
+                            "px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest shadow-sm",
                             totalStock > 0
-                                ? "bg-green-50 border-green-200 text-green-600"
+                                ? "bg-emerald-50 border-emerald-200 text-emerald-600"
                                 : "bg-red-50 border-red-200 text-red-600 shadow-sm"
                         )}>
                             {totalStock > 0 ? `${totalStock} en stock` : 'Agotado'}
