@@ -54,7 +54,24 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    // Lógica de redireccionamiento
+    const isLoginPage = request.nextUrl.pathname.startsWith('/login')
+
+    if (!user && !isLoginPage) {
+        // Redirigir a login si no hay usuario y no está en la página de login
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        return NextResponse.redirect(url)
+    }
+
+    if (user && isLoginPage) {
+        // Redirigir al dashboard si ya está logueado e intenta entrar a login
+        const url = request.nextUrl.clone()
+        url.pathname = '/'
+        return NextResponse.redirect(url)
+    }
 
     return response
 }
