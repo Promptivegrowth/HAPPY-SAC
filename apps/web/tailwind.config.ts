@@ -12,6 +12,15 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      fontFamily: {
+        body: ["var(--font-body)", "sans-serif"],
+        display: ["var(--font-display)", "serif"],
+        accent: ["var(--font-accent)", "display"],
+      },
+      borderRadius: {
+        lg: "var(--radius-lg)",
+        xl: "var(--radius-xl)",
+      },
     },
   },
   plugins: [],
