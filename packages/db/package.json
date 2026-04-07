@@ -1,0 +1,12 @@
+{
+    "name": "@happy-sac/db",
+    "version": "0.0.1",
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "scripts": {
+        "generate": "supabase gen types typescript --project-id mickytkrhfwjpqdoalyx > src/database.types.ts"
+    },
+    "dependencies": {
+        "@supabase/supabase-js": "^2.39.0"
+    }
+}

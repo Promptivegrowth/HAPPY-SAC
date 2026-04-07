@@ -4,17 +4,16 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:erp": "turbo run dev --filter=erp",
+    "dev:web": "turbo run dev --filter=web",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "typeCheck": "turbo run typeCheck",
+    "clean": "turbo run clean && rimraf node_modules"
   },
   "devDependencies": {
-    "prettier": "^3.7.4",
-    "turbo": "^2.9.4",
-    "typescript": "5.9.2"
-  },
-  "engines": {
-    "node": ">=18"
+    "turbo": "latest",
+    "typescript": "^5.3.3",
+    "rimraf": "^5.0.5"
   },
   "packageManager": "npm@10.9.2",
   "workspaces": [
