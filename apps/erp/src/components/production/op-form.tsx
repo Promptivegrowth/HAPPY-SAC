@@ -62,23 +62,15 @@ export default function OPForm({ products }: { products: any[] }) {
 
         setIsCalculating(true)
         try {
-            // Fetch recipe for this product (multi-size recipes are for all sizes or specific ones?)
-            // For now, assume one recipe per product_id that applies to all sizes as a base
-            const { data: recipe } = await supabase
+            // 1. Obtener la receta activa para el producto
+            const { data: recipe, error: recipeError } = await (supabase
                 .from('recipes')
-                .select(`
-                    id,
-                    merma_default,
-                    items:recipe_items(
-                        material_id,
-                        cantidad,
-                        merma_porcentaje,
-                        material:products(nombre, codigo)
-                    )
-                `)
+                .select('id, merma_default')
                 .eq('product_id', selectedProduct)
                 .eq('estado', 'ACTIVA')
-                .single()
+                .maybeSingle() as any)
+
+            if (recipeError) throw recipeError
 
             if (!recipe) {
                 toast.warning("No hay ficha técnica ACTIVA para este producto")
@@ -86,16 +78,47 @@ export default function OPForm({ products }: { products: any[] }) {
                 return
             }
 
+            // 2. Obtener los ítems de la receta (ingredientes)
+            const { data: recipeItems, error: itemsError } = await (supabase
+                .from('recipe_items')
+                .select('material_id, cantidad, merma_porcentaje')
+                .eq('recipe_id', recipe.id) as any)
+
+            if (itemsError) throw itemsError
+
+            if (!recipeItems || recipeItems.length === 0) {
+                toast.warning("La ficha técnica no tiene ingredientes registrados")
+                setExplosion([])
+                return
+            }
+
+            // 3. Obtener los detalles de los materiales
+            const materialIds = recipeItems.map((ri: any) => ri.material_id)
+            const { data: materialsData, error: materialsError } = await (supabase
+                .from('materials')
+                .select('id, nombre, codigo')
+                .in('id', materialIds) as any)
+
+            if (materialsError) throw materialsError
+
+            // Mapear detalles de materiales para rápido acceso
+            const materialsMap = (materialsData || []).reduce((acc: any, m: any) => {
+                acc[m.id] = m
+                return acc
+            }, {})
+
             const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0)
 
-            // @ts-ignore
-            const calculated = recipe.items.map((item: any) => {
+            // 4. Calcular explosión vinculando los datos manualmente
+            const calculated = recipeItems.map((item: any) => {
+                const materialInfo = materialsMap[item.material_id] || { nombre: 'Desconocido', codigo: 'S/C' }
                 const baseAmount = item.cantidad * totalQuantity
                 const mermaAmount = baseAmount * ((item.merma_porcentaje || recipe.merma_default || 3) / 100)
+
                 return {
                     material_id: item.material_id,
-                    nombre: item.material.nombre,
-                    codigo: item.material.codigo,
+                    nombre: materialInfo.nombre,
+                    codigo: materialInfo.codigo,
                     cantidad_base: baseAmount,
                     merma: mermaAmount,
                     total: baseAmount + mermaAmount
@@ -121,7 +144,7 @@ export default function OPForm({ products }: { products: any[] }) {
             const { data: company } = await supabase.from('companies').select('id').single()
 
             // 1. Create OP
-            const { data: op, error: opError } = await supabase
+            const { data: op, error: opError } = await (supabase
                 .from('production_orders')
                 .insert([{
                     company_id: company?.id,
@@ -133,7 +156,7 @@ export default function OPForm({ products }: { products: any[] }) {
                     items_json: items // Store for reference if table not expanded yet
                 }])
                 .select()
-                .single()
+                .single() as any)
 
             if (opError) throw opError
 
