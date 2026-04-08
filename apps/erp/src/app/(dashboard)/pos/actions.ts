@@ -46,8 +46,8 @@ export async function processSale(saleData: {
         sale_id: sale.id,
         product_id: item.productId,
         product_size_id: item.sizeId,
-        quantity: item.quantity,
-        unit_price: item.price,
+        cantidad: item.quantity,
+        precio_unitario: item.price,
         subtotal: item.subtotal
     }))
 
