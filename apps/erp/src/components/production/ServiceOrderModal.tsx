@@ -60,7 +60,12 @@ export default function ServiceOrderModal({ isOpen, onClose, productionOrder }: 
     }
 
     const fetchMaterials = async () => {
-        const { data } = await supabase.from('products').select('*').eq('tipo_item', 'MATERIAL')
+        // Consultar de la vista de stock real para que coincida con el inventario
+        const { data } = await supabase
+            .from('v_stock_actual')
+            .select('*')
+            .eq('tipo_item', 'MATERIAL')
+            .order('nombre')
         setMaterials(data || [])
     }
 
