@@ -24,6 +24,8 @@ import RecipeManager from "@/components/production/RecipeManager"
 import ServiceOrderModal from "@/components/production/ServiceOrderModal"
 import OSDetailModal from "@/components/production/OSDetailModal"
 import OPDetailModal from "@/components/production/OPDetailModal"
+import { cancelProductionOrder, cancelServiceOrder } from "@/app/(dashboard)/production/actions"
+import { useRouter } from "next/navigation"
 
 interface ProductionClientProps {
     initialOrders: any[]
@@ -34,6 +36,7 @@ interface ProductionClientProps {
 
 export default function ProductionClient({ initialOrders, initialServices, products, activeTab: defaultTab }: ProductionClientProps) {
     const supabase = createClient()
+    const router = useRouter()
     const [activeTab, setActiveTab] = useState(defaultTab)
     const [orders, setOrders] = useState(initialOrders)
     const [services, setServices] = useState(initialServices)
@@ -43,22 +46,38 @@ export default function ProductionClient({ initialOrders, initialServices, produ
     const [selectedOPForOS, setSelectedOPForOS] = useState<any>(null)
     const [selectedOPDetail, setSelectedOPDetail] = useState<any>(null)
     const [isOPDetailOpen, setIsOPDetailOpen] = useState(false)
+    const [isCancelling, setIsCancelling] = useState(false)
+
+    // Formateador seguro para hidratación
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return 'N/A'
+        try {
+            const date = new Date(dateStr)
+            // Usamos un formato estático que no dependa del locale del navegador durante la hidratación inicial
+            // o simplemente manejamos nulos de forma segura.
+            return `${date.getUTCDate().toString().padStart(2, '0')}/${(date.getUTCMonth() + 1).toString().padStart(2, '0')}`
+        } catch {
+            return 'N/A'
+        }
+    }
 
     const handleCancelOS = async (osId: string) => {
         if (!confirm("¿Estás seguro de cancelar esta Orden de Servicio?")) return
 
+        setIsCancelling(true)
         try {
-            const { error } = await (supabase
-                .from('service_orders')
-                .update({ estado: 'CANCELADO' } as any)
-                .eq('id', osId) as any)
-
-            if (error) throw error
-
-            setServices(prev => prev.map(s => s.id === osId ? { ...s, estado: 'CANCELADO' } : s))
-            toast.success("Orden de Servicio cancelada")
+            const result = await cancelServiceOrder(osId)
+            if (result.success) {
+                setServices(prev => prev.map(s => s.id === osId ? { ...s, estado: 'CANCELADO' } : s))
+                toast.success("Orden de Servicio cancelada")
+                router.refresh()
+            } else {
+                throw new Error(result.error)
+            }
         } catch (error: any) {
             toast.error("Error al cancelar OS", { description: error.message })
+        } finally {
+            setIsCancelling(false)
         }
     }
 
@@ -230,7 +249,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-6 text-xs text-slate-500 font-bold uppercase tracking-tighter">
-                                                    {order.fecha_entrega_est ? new Date(order.fecha_entrega_est).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' }) : 'N/A'}
+                                                    {formatDate(order.fecha_entrega_est)}
                                                 </td>
                                                 <td className="px-8 py-6">
                                                     <span className={cn(
@@ -261,20 +280,25 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                                                 onClick={async (e) => {
                                                                     e.stopPropagation();
                                                                     if (confirm('¿Estás seguro de cancelar esta OP?')) {
-                                                                        const { error } = await supabase
-                                                                            .from('production_orders')
-                                                                            .update({ estado: 'CANCELADO' })
-                                                                            .eq('id', order.id);
-
-                                                                        if (error) {
-                                                                            toast.error("Error al cancelar la OP");
-                                                                        } else {
-                                                                            toast.success("OP Cancelada");
-                                                                            window.location.reload();
+                                                                        setIsCancelling(true)
+                                                                        try {
+                                                                            const result = await cancelProductionOrder(order.id)
+                                                                            if (result.success) {
+                                                                                setOrders(prev => prev.map(o => o.id === order.id ? { ...o, estado: 'CANCELADO' } : o))
+                                                                                toast.success("OP Cancelada");
+                                                                                router.refresh()
+                                                                            } else {
+                                                                                toast.error("Error: " + result.error);
+                                                                            }
+                                                                        } catch (err) {
+                                                                            toast.error("Fallo la comunicación con el servidor");
+                                                                        } finally {
+                                                                            setIsCancelling(false)
                                                                         }
                                                                     }
                                                                 }}
-                                                                className="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all shadow-sm flex items-center gap-2"
+                                                                disabled={isCancelling}
+                                                                className="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
                                                                 title="Cancelar OP"
                                                             >
                                                                 <Trash2 size={12} />
@@ -391,7 +415,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                             <td className="px-8 py-6 text-xs font-black text-slate-500 italic">OP #{os.op?.numero_doc || 'N/A'}</td>
                                             <td className="px-8 py-6 text-sm font-black text-slate-900 text-right">S/ {(os.total_costo || 0).toFixed(2)}</td>
                                             <td className="px-8 py-6 text-xs text-slate-500 font-bold uppercase tracking-tighter">
-                                                {os.fecha_entrega ? new Date(os.fecha_entrega).toLocaleDateString('es-PE') : 'N/A'}
+                                                {formatDate(os.fecha_entrega)}
                                             </td>
                                             <td className="px-8 py-6">
                                                 <span className={cn(
