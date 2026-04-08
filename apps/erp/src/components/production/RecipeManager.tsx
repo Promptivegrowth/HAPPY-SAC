@@ -56,7 +56,7 @@ export default function RecipeManager({ products }: RecipeManagerProps) {
             .select(`
                 *,
                 product:products(nombre, codigo),
-                recipe_items(*, material:materials(nombre, codigo, unidad:units(abreviatura))),
+                recipe_items(*, material:materials(nombre, codigo)),
                 recipe_operations(*)
             `)
             .order('created_at', { ascending: false }) as any)
