@@ -29,7 +29,7 @@ export async function processSale(saleData: {
             cash_shift_id: saleData.shiftId,
             total: saleData.total,
             igv: saleData.igv,
-            payment_method: saleData.paymentMethod,
+            metodo_pago: saleData.paymentMethod,
             status: 'COMPLETED'
         })
         .select()
