@@ -1,0 +1,6 @@
+id
+recipe_id
+tipo_operacion
+costo_base
+tiempo_estimado_min
+orden

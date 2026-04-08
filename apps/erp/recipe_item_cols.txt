@@ -1,0 +1,17 @@
+id
+recipe_id
+material_id
+clasificacion
+cantidad
+unidad_id
+desperdicio_pct
+cantidad_con_desperdicio
+sale_a_servicio
+proveedor_servicio_id
+queda_en_almacen
+orden
+observaciones
+costo_estimado
+created_at
+created_by
+merma_porcentaje
