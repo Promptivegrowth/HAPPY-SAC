@@ -49,7 +49,7 @@ export default async function InventoryPage() {
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">Inventario</h1>
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight italic uppercase">Inventario <span className="text-pink-600">(v3.0)</span></h1>
                 <p className="text-slate-500 mt-1">Gestión de telas, insumos y productos terminados de HAPPY S.A.C.</p>
             </div>
 

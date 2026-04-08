@@ -66,7 +66,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tighter text-slate-900 uppercase italic">Control de <span className="text-pink-600">Producción</span></h1>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Control de <span className="text-pink-600">Producción</span> <span className="text-xs align-top text-slate-300">v3.0</span></h1>
                     <p className="text-slate-500 mt-1 font-medium italic">Gestión integral de disfraces, recetas y servicios tercerizados.</p>
                 </div>
                 {activeTab === 'orders' && (
@@ -361,6 +361,18 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                                         Cancelar
                                                     </button>
                                                 )}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedItemForKardex(os);
+                                                        setIsKardexOpen(true);
+                                                    }}
+                                                    className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all ml-2"
+                                                    title="Ver Kardex (Historial)"
+                                                >
+                                                    {/* @ts-ignore */}
+                                                    <History size={16} />
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}

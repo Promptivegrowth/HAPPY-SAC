@@ -107,7 +107,8 @@ export default function ServiceOrderModal({ isOpen, onClose, productionOrder }: 
                     material_id: a.material_id,
                     cantidad_entregada: a.cantidad
                 }))
-                await (supabase.from('service_order_materials').insert(aviosToInsert) as any)
+                const { error: errorAvios } = await (supabase.from('service_order_materials').insert(aviosToInsert) as any)
+                if (errorAvios) throw errorAvios
             }
 
             toast.success("Orden de Servicio generada exitosamente")
