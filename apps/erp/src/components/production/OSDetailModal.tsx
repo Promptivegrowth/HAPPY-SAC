@@ -38,7 +38,8 @@ export default function OSDetailModal({ isOpen, onClose, os }: OSDetailModalProp
                 .from('service_order_materials')
                 .select(`
                     *,
-                    material:products(nombre, codigo, unidad_medida)
+                    insumo:materials(nombre, codigo, unidad:units_of_measure(simbolo)),
+                    producto:products(nombre, codigo)
                 `)
                 .eq('os_id', os.id) as any)
 
@@ -138,19 +139,22 @@ export default function OSDetailModal({ isOpen, onClose, os }: OSDetailModalProp
                                             <td colSpan={2} className="px-8 py-10 text-center text-slate-400 italic text-xs">Cargando materiales...</td>
                                         </tr>
                                     ) : materials.length > 0 ? (
-                                        materials.map((m: any) => (
-                                            <tr key={m.id} className="hover:bg-white/80 transition-all">
-                                                <td className="px-8 py-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-black text-slate-900">{m.material?.nombre}</span>
-                                                        <span className="text-[10px] text-slate-400 font-bold uppercase">{m.material?.codigo}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-4 text-right">
-                                                    <span className="text-xs font-black text-indigo-600">{m.cantidad_entregada} {m.material?.unidad_medida || 'UND'}</span>
-                                                </td>
-                                            </tr>
-                                        ))
+                                        materials.map((m: any) => {
+                                            const itemInfo = m.insumo || m.producto;
+                                            return (
+                                                <tr key={m.id} className="hover:bg-white/80 transition-all">
+                                                    <td className="px-8 py-4">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-black text-slate-900">{itemInfo?.nombre}</span>
+                                                            <span className="text-[10px] text-slate-400 font-bold uppercase">{itemInfo?.codigo}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-4 text-right">
+                                                        <span className="text-xs font-black text-indigo-600">{m.cantidad_entregada} {m.insumo?.unidad?.simbolo || 'UND'}</span>
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })
                                     ) : (
                                         <tr>
                                             <td colSpan={2} className="px-8 py-20 text-center">
