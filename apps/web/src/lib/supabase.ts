@@ -68,5 +68,6 @@ export async function getProductoPorSlug(slug: string) {
     `)
     .eq('slug', slug)
     .eq('publicar_web', true)
+    .eq('activo', true)
     .single()
 }

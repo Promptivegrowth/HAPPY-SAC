@@ -52,13 +52,17 @@ export function ProductList({ initialData }: ProductListProps) {
     }
 
     const handleDelete = async (id: string) => {
-        if (!confirm("¿Está seguro de eliminar este producto?")) return
+        if (!confirm("¿Deseas descontinuar este producto? Esto lo ocultará de los catálogos pero mantendrá su historial.")) return
 
         const supabase = createClient()
-        const { error } = await supabase.from('products').delete().eq('id', id)
+        // Borrado lógico (Soft Delete)
+        const { error } = await supabase
+            .from('products')
+            .update({ activo: false })
+            .eq('id', id)
 
         if (error) {
-            console.error("Error deleting product:", error)
+            console.error("Error disabling product:", error)
             alert("Error al eliminar el producto")
         } else {
             setItems(items.filter(item => item.id !== id))
