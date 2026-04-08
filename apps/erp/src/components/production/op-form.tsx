@@ -141,30 +141,52 @@ export default function OPForm({ products }: { products: any[] }) {
 
         setIsLoading(true)
         try {
-            const { data: company } = await supabase.from('companies').select('id').single()
+            const { data: company } = await (supabase.from('companies').select('id').single() as any)
 
-            // 1. Create OP
-            const { data: op, error: opError } = await (supabase
-                .from('production_orders')
+            // 1. Crear Cabecera de la Orden de Producción
+            // Columnas reales: company_id, total_prendas, fecha_entrega_est, estado, numero_doc, etc.
+            const totalPrendas = items.reduce((sum, i) => sum + i.quantity, 0)
+            const { data: op, error: opError } = await ((supabase
+                .from('production_orders') as any)
                 .insert([{
                     company_id: company?.id,
-                    product_id: selectedProduct,
-                    cantidad_solicitada: items.reduce((sum, i) => sum + i.quantity, 0),
-                    fecha_entrega: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+                    total_prendas: totalPrendas,
+                    fecha_emision: new Date().toISOString(),
+                    fecha_entrega_est: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
                     estado: 'PENDIENTE',
-                    // @ts-ignore
-                    items_json: items // Store for reference if table not expanded yet
+                    numero_doc: `OP-${Date.now().toString().slice(-6)}`,
+                    referencia_cliente: 'GENERADO DESDE ERP'
                 }])
                 .select()
                 .single() as any)
 
             if (opError) throw opError
 
-            // 2. Clear reservations (?) - Logic would go here
+            // 2. Crear los ítems (Detalle) de la OP
+            // Columnas reales: order_id, product_id, product_size_id, cantidad_pedida, estado_item
+            const orderItems = items
+                .filter(item => item.size_id && item.quantity > 0)
+                .map(item => ({
+                    order_id: op.id,
+                    product_id: selectedProduct,
+                    product_size_id: item.size_id,
+                    cantidad_pedida: item.quantity,
+                    estado_item: 'PENDIENTE',
+                    costo_est_unit: 0
+                }))
 
-            toast.success(`OP #${op.numero_op} creada exitosamente`)
+            if (orderItems.length > 0) {
+                const { error: itemsError } = await ((supabase
+                    .from('production_order_items') as any)
+                    .insert(orderItems) as any)
+
+                if (itemsError) throw itemsError
+            }
+
+            toast.success(`OP #${op.numero_doc || op.id.slice(0, 8)} creada exitosamente`)
             router.push("/production")
         } catch (err: any) {
+            console.error("Error completo OP:", err)
             toast.error("Error al crear la OP", { description: err.message })
         } finally {
             setIsLoading(false)
