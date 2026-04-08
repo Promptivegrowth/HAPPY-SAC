@@ -15,7 +15,8 @@ export default async function PosPage() {
             product_sizes (
                 id,
                 talla,
-                precio_venta
+                precio_venta,
+                stock
             )
         `)
         .eq('activo', true)
