@@ -2,7 +2,7 @@
 import React, { useCallback } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, Star } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -50,13 +50,22 @@ export function HeroSlider() {
                     {SLIDES.map((slide, index) => (
                         <div key={index} className="relative flex-[0_0_100%] h-full">
                             {/* Background Image */}
-                            <Image
-                                src={slide.image}
-                                alt={slide.title}
-                                fill
-                                className="object-cover opacity-60 transition-transform duration-[10s] hover:scale-110"
-                                priority={index === 0}
-                            />
+                            <div className="absolute inset-0 overflow-hidden">
+                                <motion.div
+                                    initial={{ scale: 1.2 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ duration: 15, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                                    className="relative w-full h-[120%] -top-[10%]"
+                                >
+                                    <Image
+                                        src={slide.image}
+                                        alt={slide.title}
+                                        fill
+                                        className="object-cover opacity-60 object-[center_20%]"
+                                        priority={index === 0}
+                                    />
+                                </motion.div>
+                            </div>
 
                             {/* Black Overlay for readability */}
                             <div className="absolute inset-0 bg-slate-900/40" />

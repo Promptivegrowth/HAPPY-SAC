@@ -9,7 +9,7 @@ const CATEGORIES = [
         id: 1,
         name: 'Fiestas Patrias',
         count: '15 Modelos',
-        image: 'https://images.unsplash.com/photo-1590494165264-1ebe3602eb80?q=80&w=800&auto=format&fit=crop',
+        image: '/images/cat_peru.png',
         href: '/catalogo?categoria=fiestas-patrias',
         span: 'col-span-1 md:col-span-2'
     },
@@ -17,7 +17,7 @@ const CATEGORIES = [
         id: 2,
         name: 'Halloween',
         count: '24 Modelos',
-        image: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=800&auto=format&fit=crop',
+        image: '/images/cat_halloween.png',
         href: '/catalogo?categoria=halloween',
         span: 'col-span-1'
     },
@@ -25,7 +25,7 @@ const CATEGORIES = [
         id: 3,
         name: 'Navidad',
         count: '12 Modelos',
-        image: 'https://images.unsplash.com/photo-1543589077-47d81606c1bf?q=80&w=800&auto=format&fit=crop',
+        image: '/images/cat_navidad.png',
         href: '/catalogo?categoria=navidad',
         span: 'col-span-1'
     },
@@ -33,7 +33,7 @@ const CATEGORIES = [
         id: 4,
         name: 'Niños & Bebés',
         count: '30 Modelos',
-        image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?q=80&w=800&auto=format&fit=crop',
+        image: '/images/cat_bebes.png',
         href: '/catalogo?categoria=ninos',
         span: 'col-span-1 md:col-span-2'
     }
