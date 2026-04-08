@@ -38,11 +38,11 @@ export default async function SalesPage() {
                         <Filter size={18} />
                         Filtros
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2.5 bg-pink-600 hover:bg-pink-700 text-white font-semibold rounded-xl shadow-lg shadow-pink-600/10 transition-all">
+                    <Link href="/pos" className="flex items-center gap-2 px-4 py-2.5 bg-pink-600 hover:bg-pink-700 text-white font-semibold rounded-xl shadow-lg shadow-pink-600/10 transition-all">
                         {/* @ts-ignore */}
                         <Plus size={18} />
                         Nueva Venta
-                    </button>
+                    </Link>
                 </div>
             </div>
 

@@ -23,14 +23,24 @@ export async function processSale(saleData: {
     const supabase = createClient()
 
     // 1. Crear el registro de venta (cabecera)
+    // Para la demo, generamos un número correlativo simple basado en el timestamp o UUID
+    const nextNumber = Math.floor(Date.now() / 1000) % 1000000
+
     const { data: sale, error: saleError } = await (supabase.from('sales') as any)
         .insert({
+            company_id: '24b7a942-8a5a-434f-beac-d6fd222702ba', // ID de empresa detectado
             customer_id: saleData.customerId,
             cash_shift_id: saleData.shiftId,
             total: saleData.total,
             igv: saleData.igv,
             metodo_pago: saleData.paymentMethod,
-            status: 'COMPLETED'
+            status: 'COMPLETED',
+            estado_pago: 'PAGADO',
+            sunat_estado: 'PENDIENTE',
+            fecha_emision: new Date().toISOString().split('T')[0],
+            serie: 'POS1',
+            numero: nextNumber,
+            moneda: 'PEN'
         })
         .select()
         .single()
