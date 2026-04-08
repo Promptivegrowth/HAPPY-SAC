@@ -1,0 +1,112 @@
+[
+  {
+    "id": "7785d5d5-00b2-4164-a12c-1b1a5903020c",
+    "nombre": "SPD_PROD_TEST",
+    "codigo": "SPD-001"
+  },
+  {
+    "id": "30556f35-5cd3-46ea-9100-50b12e11c293",
+    "nombre": "Tela Spandex Roja Profesional",
+    "codigo": "MAT-SPD-PRO-V4-01"
+  },
+  {
+    "id": "3ed4536c-1346-4ddc-b1ac-cf5ce27eaed3",
+    "nombre": "Tela Spandex Azul Profesional",
+    "codigo": "MAT-SPD-PRO-V4-02"
+  },
+  {
+    "id": "e59e33e5-1bb8-4d18-836c-8f8214130f19",
+    "nombre": "Tela Spandex Roja Pro V5",
+    "codigo": "MAT-SPD-PRO-V5-01"
+  },
+  {
+    "id": "d1b417e1-92d5-4af7-812e-e4a1dd55b3c6",
+    "nombre": "Tela Spandex Azul Pro V5",
+    "codigo": "MAT-SPD-PRO-V5-02"
+  },
+  {
+    "id": "0b64c4a7-700a-49d7-ae43-bffb9eb0d07d",
+    "nombre": "Tela Spandex Roja Pro V6",
+    "codigo": "MAT-SPD-V6-01"
+  },
+  {
+    "id": "c20a748f-bf7e-411d-b04a-7d27872d5721",
+    "nombre": "Tela Spandex Azul Pro V6",
+    "codigo": "MAT-SPD-V6-02"
+  },
+  {
+    "id": "5b63fe38-fdd5-4bd8-bcf2-839cb674f2ab",
+    "nombre": "Tela Spandex Roja Pro V7",
+    "codigo": "MAT-SPD-V7-01"
+  },
+  {
+    "id": "26fcef70-5c48-466a-aae4-20a9a81f6ad0",
+    "nombre": "Tela Spandex Azul Pro V7",
+    "codigo": "MAT-SPD-V7-02"
+  },
+  {
+    "id": "fe7f3838-b295-4ed2-af18-7973cd2051c6",
+    "nombre": "Tela Spandex Roja 4-way",
+    "codigo": "MAT-SPN-ROJA-01"
+  },
+  {
+    "id": "81aec97e-c0cc-4134-801e-86dd6b17b820",
+    "nombre": "Tela Spandex Azul 4-way",
+    "codigo": "MAT-SPN-AZUL-02"
+  },
+  {
+    "id": "b6efedc6-aae0-47e3-8886-a45dae0e896d",
+    "nombre": "Forro Satin Blanco",
+    "codigo": "MAT-FRR-BLC-03"
+  },
+  {
+    "id": "0fe03221-71f9-45fa-8557-7e1ea839a3dc",
+    "nombre": "Hilo Negro 120yd",
+    "codigo": "MAT-HLL-NGR-04"
+  },
+  {
+    "id": "cf1f6c47-aa59-4888-be8d-05c8fd6e796c",
+    "nombre": "Velcro 1\" Negro",
+    "codigo": "MAT-VLC-01"
+  },
+  {
+    "id": "b6791c7b-d824-45fe-8bcf-dd1360d06e00",
+    "nombre": "Elástico 1cm",
+    "codigo": "MAT-ELS-01"
+  },
+  {
+    "id": "81d13077-3b28-47b8-9fb7-1cc26a13272f",
+    "nombre": "pinocho",
+    "codigo": "0006"
+  },
+  {
+    "id": "80cd1f40-3d2d-462d-a9ff-8b2660c2f1aa",
+    "nombre": "hulk",
+    "codigo": "hs80"
+  },
+  {
+    "id": "dba09ddd-8a37-45b5-a5db-a436c7da2f95",
+    "nombre": "Disfraz Spiderman Cl�sico",
+    "codigo": "PROD-SPD-001"
+  },
+  {
+    "id": "bb370297-e6e2-4e63-97a1-65ea1f03ad5f",
+    "nombre": "Disfraz Spiderman V5",
+    "codigo": "SPD-V5"
+  },
+  {
+    "id": "13606094-1714-4d41-9b57-6236baca4f99",
+    "nombre": "Disfraz Spiderman V6",
+    "codigo": "SPD-V6"
+  },
+  {
+    "id": "03a678f3-4d4a-4d5b-919b-397360a1f584",
+    "nombre": "Gasa Spiderman Roja V8",
+    "codigo": "MAT-SPD-V8-01"
+  },
+  {
+    "id": "73bbf29f-62c1-4395-943a-23da6e4715a4",
+    "nombre": "Gasa Spiderman Azul V8",
+    "codigo": "MAT-SPD-V8-02"
+  }
+]
