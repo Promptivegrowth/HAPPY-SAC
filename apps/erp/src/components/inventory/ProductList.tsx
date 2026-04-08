@@ -12,10 +12,12 @@ import {
     Tag,
     Shapes,
     Package,
-    ArrowUpDown
+    ArrowUpDown,
+    History
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ProductFormModal } from "./ProductFormModal"
+import KardexModal from "./KardexModal"
 import { createClient } from "@/lib/supabase/client"
 
 interface ProductListProps {
@@ -28,6 +30,8 @@ export function ProductList({ initialData }: ProductListProps) {
     const [items, setItems] = useState(initialData)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<any>(null)
+    const [selectedItemForKardex, setSelectedItemForKardex] = useState<any>(null)
+    const [isKardexOpen, setIsKardexOpen] = useState(false)
 
     const handleSave = (savedProduct: any) => {
         if (editingProduct) {
@@ -194,7 +198,17 @@ export function ProductList({ initialData }: ProductListProps) {
                                         </div>
                                     </td>
                                     <td className="px-6 py-5 text-right">
-                                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all text-neutral-x-400">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedItemForKardex(item)
+                                                    setIsKardexOpen(true)
+                                                }}
+                                                className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                                title="Ver Kardex (Historial)"
+                                            >
+                                                <History size={16} />
+                                            </button>
                                             <button
                                                 onClick={() => handleEdit(item)}
                                                 className="p-2.5 text-slate-400 hover:text-pink-600 hover:bg-pink-50 rounded-xl transition-all"
@@ -223,6 +237,12 @@ export function ProductList({ initialData }: ProductListProps) {
                 onClose={() => setIsModalOpen(false)}
                 product={editingProduct}
                 onSave={handleSave}
+            />
+
+            <KardexModal
+                isOpen={isKardexOpen}
+                onClose={() => setIsKardexOpen(false)}
+                item={selectedItemForKardex}
             />
         </div>
     )

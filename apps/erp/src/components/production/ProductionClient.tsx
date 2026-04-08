@@ -20,6 +20,7 @@ import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import RecipeManager from "@/components/production/RecipeManager"
 import ServiceOrderModal from "@/components/production/ServiceOrderModal"
+import OSDetailModal from "@/components/production/OSDetailModal"
 
 interface ProductionClientProps {
     initialOrders: any[]
@@ -33,6 +34,8 @@ export default function ProductionClient({ initialOrders, initialServices, produ
     const [activeTab, setActiveTab] = useState(defaultTab)
     const [orders, setOrders] = useState(initialOrders)
     const [services, setServices] = useState(initialServices)
+    const [selectedOS, setSelectedOS] = useState<any>(null)
+    const [isOSDetailOpen, setIsOSDetailOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedOPForOS, setSelectedOPForOS] = useState<any>(null)
 
@@ -318,7 +321,14 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {(services || []).map((os: any) => (
-                                        <tr key={os.id} className="hover:bg-slate-50/80 transition-all group">
+                                        <tr
+                                            key={os.id}
+                                            className="hover:bg-slate-50/80 transition-all group cursor-pointer"
+                                            onClick={() => {
+                                                setSelectedOS(os)
+                                                setIsOSDetailOpen(true)
+                                            }}
+                                        >
                                             <td className="px-8 py-6 text-xs font-black text-slate-900">OS-{os.numero_os}</td>
                                             <td className="px-8 py-6 font-bold text-slate-900">{os.supplier?.nombre_comercial || os.supplier?.razon_social}</td>
                                             <td className="px-8 py-6">
@@ -342,7 +352,10 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                             <td className="px-8 py-6 text-right">
                                                 {os.estado === 'PENDIENTE' && (
                                                     <button
-                                                        onClick={() => handleCancelOS(os.id)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            handleCancelOS(os.id)
+                                                        }}
                                                         className="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[9px] font-black uppercase hover:bg-rose-600 hover:text-white transition-all shadow-sm"
                                                     >
                                                         Cancelar
@@ -374,6 +387,12 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                 isOpen={!!selectedOPForOS}
                 onClose={() => setSelectedOPForOS(null)}
                 productionOrder={selectedOPForOS}
+            />
+
+            <OSDetailModal
+                isOpen={isOSDetailOpen}
+                onClose={() => setIsOSDetailOpen(false)}
+                os={selectedOS}
             />
         </div>
     )
