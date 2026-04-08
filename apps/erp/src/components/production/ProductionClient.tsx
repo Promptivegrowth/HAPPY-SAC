@@ -13,7 +13,8 @@ import {
     ChevronRight,
     ExternalLink,
     Box,
-    AlertCircle
+    AlertCircle,
+    Trash2
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -184,8 +185,10 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {filteredOrders.map((order: any) => {
-                                        const progress = order.total_prendas > 0
-                                            ? Math.round((order.cantidad_terminada / order.total_prendas) * 100)
+                                        const safeTotal = Number(order.total_prendas) || 0;
+                                        const safeDone = Number(order.cantidad_terminada) || 0;
+                                        const progress = safeTotal > 0
+                                            ? Math.round((safeDone / safeTotal) * 100)
                                             : 0
 
                                         return (
@@ -243,13 +246,40 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                                 <td className="px-8 py-6 text-right">
                                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
                                                         <button
-                                                            onClick={() => setSelectedOPForOS(order)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedOPForOS(order);
+                                                            }}
                                                             className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm flex items-center gap-2"
+                                                            title="Generar OS"
                                                         >
-                                                            {/* @ts-ignore */}
                                                             <ExternalLink size={12} />
-                                                            Gen OS
                                                         </button>
+
+                                                        {order.estado !== 'CANCELADO' && order.estado !== 'COMPLETADO' && (
+                                                            <button
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    if (confirm('¿Estás seguro de cancelar esta OP?')) {
+                                                                        const { error } = await supabase
+                                                                            .from('production_orders')
+                                                                            .update({ estado: 'CANCELADO' })
+                                                                            .eq('id', order.id);
+
+                                                                        if (error) {
+                                                                            toast.error("Error al cancelar la OP");
+                                                                        } else {
+                                                                            toast.success("OP Cancelada");
+                                                                            window.location.reload();
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                className="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all shadow-sm flex items-center gap-2"
+                                                                title="Cancelar OP"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        )}
                                                         <div className="p-2 text-slate-300 group-hover:text-pink-600 transition-all transform group-hover:translate-x-1">
                                                             {/* @ts-ignore */}
                                                             <ChevronRight size={18} />

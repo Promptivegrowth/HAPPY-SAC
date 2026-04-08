@@ -244,7 +244,21 @@ export default function OPForm({ products }: { products: any[] }) {
                                     required
                                 >
                                     <option value="">Seleccionar producto...</option>
-                                    {products.map(p => <option key={p.id} value={p.id}>{p.nombre} ({p.codigo})</option>)}
+                                    {(() => {
+                                        // Agrupar por nombre para evitar duplicados visuales
+                                        const seen = new Set();
+                                        return products
+                                            .filter(p => {
+                                                if (seen.has(p.nombre)) return false;
+                                                seen.add(p.nombre);
+                                                return true;
+                                            })
+                                            .map(p => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.nombre}
+                                                </option>
+                                            ));
+                                    })()}
                                 </select>
                             </div>
 
