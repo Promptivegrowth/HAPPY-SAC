@@ -110,8 +110,7 @@ export default function ServiceOrderModal({ isOpen, onClose, productionOrder }: 
                 const aviosToInsert = formData.avios.map(a => ({
                     os_id: os.id,
                     material_id: a.material_id,
-                    cantidad_entregada: a.cantidad,
-                    company_id: productionOrder.company_id // Asegurar RLS
+                    cantidad_entregada: a.cantidad
                 }))
                 const { error: errorAvios } = await (supabase.from('service_order_materials').insert(aviosToInsert) as any)
                 if (errorAvios) {
