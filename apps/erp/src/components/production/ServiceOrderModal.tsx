@@ -110,10 +110,14 @@ export default function ServiceOrderModal({ isOpen, onClose, productionOrder }: 
                 const aviosToInsert = formData.avios.map(a => ({
                     os_id: os.id,
                     material_id: a.material_id,
-                    cantidad_entregada: a.cantidad
+                    cantidad_entregada: a.cantidad,
+                    company_id: productionOrder.company_id // Asegurar RLS
                 }))
                 const { error: errorAvios } = await (supabase.from('service_order_materials').insert(aviosToInsert) as any)
-                if (errorAvios) throw errorAvios
+                if (errorAvios) {
+                    console.error("Error inserting materials:", errorAvios)
+                    throw errorAvios
+                }
             }
 
             toast.success("Orden de Servicio generada exitosamente")
@@ -265,7 +269,7 @@ export default function ServiceOrderModal({ isOpen, onClose, productionOrder }: 
                                                     className="w-full bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 outline-none cursor-pointer"
                                                 >
                                                     <option value="">Seleccionar material...</option>
-                                                    {materials.map(m => <option key={m.id} value={m.id}>{m.nombre} ({m.codigo})</option>)}
+                                                    {materials.map(m => <option key={m.item_id} value={m.item_id}>{m.nombre} ({m.codigo})</option>)}
                                                 </select>
                                             </td>
                                             <td className="px-8 py-4 text-right">
