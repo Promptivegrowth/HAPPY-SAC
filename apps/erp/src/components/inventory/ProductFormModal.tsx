@@ -12,7 +12,9 @@ import {
     Hash,
     CheckCircle2,
     Loader2,
-    Package
+    Package,
+    Camera,
+    Image as ImageIcon
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 // En un proyecto real usaríamos Radix UI Dialog, aquí usaremos un portal simple o un overlay
@@ -39,8 +41,10 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
         nombre_web: "",
         precio_venta_base: 0,
         en_oferta: false,
-        precio_oferta: 0
+        precio_oferta: 0,
+        imagen_url: ""
     })
+    const [uploading, setUploading] = useState(false)
 
     const STANDARD_SIZES = ["4", "6", "8", "10", "12", "14", "16", "S", "M", "L", "XL", "STD"]
 
@@ -97,6 +101,37 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
 
     const handleSizeStockChange = (talla: string, stock: number) => {
         setSelectedSizes(prev => ({ ...prev, [talla]: stock }))
+    }
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setUploading(true)
+        try {
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`
+            const filePath = `${fileName}`
+
+            const { error: uploadError } = await (supabase.storage as any)
+                .from('products')
+                .upload(filePath, file)
+
+            if (uploadError) throw uploadError
+
+            const { data } = (supabase.storage as any)
+                .from('products')
+                .getPublicUrl(filePath)
+
+            if (data?.publicUrl) {
+                setFormData((prev: any) => ({ ...prev, imagen_url: data.publicUrl }))
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error)
+            alert('Error al subir imagen: ' + (error as any).message)
+        } finally {
+            setUploading(false)
+        }
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -277,7 +312,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                             ))}
                                     </select>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-4">
                                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Precio de Venta (Base)</label>
                                     <div className="relative">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">S/</div>
@@ -288,6 +323,54 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                             onChange={e => setFormData({ ...formData, precio_venta_base: parseFloat(e.target.value) })}
                                             className="w-full pl-10 pr-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-black focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner text-slate-900"
                                         />
+                                    </div>
+                                </div>
+                                <div className="space-y-4 lg:col-span-2">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Imagen del Ítem (Vertical)</label>
+                                    <div className="flex gap-4 items-start">
+                                        <div className="relative group w-32 aspect-[3/4] bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden flex flex-col items-center justify-center transition-all hover:border-pink-300 hover:bg-pink-50/30">
+                                            {formData.imagen_url ? (
+                                                <>
+                                                    <img src={formData.imagen_url} alt="Vista previa" className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <label className="cursor-pointer p-3 bg-white/20 backdrop-blur-md rounded-2xl text-white hover:bg-white/40 transition-colors">
+                                                            <Camera size={20} />
+                                                            <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                                                        </label>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer gap-2 p-4 text-center">
+                                                    {uploading ? (
+                                                        <Loader2 className="animate-spin text-pink-500" size={24} />
+                                                    ) : (
+                                                        <>
+                                                            <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-slate-400">
+                                                                <ImageIcon size={20} />
+                                                            </div>
+                                                            <span className="text-[9px] font-black text-slate-400 uppercase leading-tight">Foto Vertical</span>
+                                                        </>
+                                                    )}
+                                                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                                                </label>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 space-y-3">
+                                            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                                <p className="text-[10px] text-slate-500 font-medium leading-relaxed italic">
+                                                    Formatos aceptados: JPG, PNG. Optimizado para 3:4.
+                                                </p>
+                                            </div>
+                                            {formData.imagen_url && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, imagen_url: '' })}
+                                                    className="text-pink-600 text-[10px] font-black uppercase hover:underline"
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

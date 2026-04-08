@@ -24,12 +24,14 @@ export default async function PosPage() {
             id,
             nombre,
             codigo,
+            imagen_url,
             product_sizes (
                 id,
                 talla,
                 precio_venta
             )
         `)
+        .eq('activo', true)
         .order('nombre', { ascending: true })
 
     return (
@@ -62,8 +64,16 @@ export default async function PosPage() {
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                         {products?.map((product: any) => (
                             <div key={product.id} className="group flex flex-col bg-white border border-slate-100 rounded-3xl p-4 transition-all hover:shadow-xl hover:shadow-pink-500/5 hover:border-pink-100 cursor-pointer">
-                                <div className="aspect-square bg-slate-50 rounded-2xl mb-4 flex items-center justify-center text-slate-300 font-black text-2xl group-hover:bg-pink-50 group-hover:text-pink-200 transition-colors">
-                                    {product.nombre.substring(0, 2).toUpperCase()}
+                                <div className="aspect-[3/4] bg-slate-50 rounded-2xl mb-4 overflow-hidden flex items-center justify-center text-slate-300 font-black text-2xl group-hover:bg-pink-50 group-hover:text-pink-200 transition-colors relative">
+                                    {product.imagen_url ? (
+                                        <img
+                                            src={product.imagen_url}
+                                            alt={product.nombre}
+                                            className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
+                                        />
+                                    ) : (
+                                        product.nombre.substring(0, 2).toUpperCase()
+                                    )}
                                 </div>
                                 <div className="space-y-1 mb-4 flex-1">
                                     <h3 className="text-sm font-bold text-slate-900 group-hover:text-pink-600 transition-colors truncate">{product.nombre}</h3>
