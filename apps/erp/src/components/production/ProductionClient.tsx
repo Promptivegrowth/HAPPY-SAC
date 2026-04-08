@@ -34,8 +34,8 @@ export default function ProductionClient({ initialOrders, initialServices, produ
     const [selectedOPForOS, setSelectedOPForOS] = useState<any>(null)
 
     const filteredOrders = (orders || []).filter(o =>
-        o.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.product?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
+        o.numero_doc?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        o.items?.[0]?.product?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
     return (
@@ -150,20 +150,20 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {filteredOrders.map((order: any) => {
-                                        const progress = order.cantidad_solicitada > 0
-                                            ? Math.round((order.cantidad_terminada / order.cantidad_solicitada) * 100)
+                                        const progress = order.total_prendas > 0
+                                            ? Math.round((order.cantidad_terminada / order.total_prendas) * 100)
                                             : 0
 
                                         return (
                                             <tr key={order.id} className="hover:bg-slate-50/80 transition-all group">
-                                                <td className="px-8 py-6 text-xs font-black text-slate-900 tracking-widest">#{order.numero_op}</td>
+                                                <td className="px-8 py-6 text-xs font-black text-slate-900 tracking-widest">#{order.numero_doc || order.id.slice(0, 8)}</td>
                                                 <td className="px-8 py-6">
                                                     <div className="flex flex-col">
-                                                        <span className="text-sm font-black text-slate-950 tracking-tight">{order.product?.nombre}</span>
-                                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{order.product?.codigo}</span>
+                                                        <span className="text-sm font-black text-slate-950 tracking-tight">{order.items?.[0]?.product?.nombre}</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{order.items?.[0]?.product?.codigo}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-8 py-6 text-sm font-black text-slate-700">{order.cantidad_solicitada}</td>
+                                                <td className="px-8 py-6 text-sm font-black text-slate-700">{order.total_prendas}</td>
                                                 <td className="px-8 py-6 min-w-[180px]">
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -179,7 +179,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-6 text-xs text-slate-500 font-bold uppercase tracking-tighter">
-                                                    {new Date(order.fecha_entrega).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}
+                                                    {order.fecha_entrega_est ? new Date(order.fecha_entrega_est).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' }) : 'N/A'}
                                                 </td>
                                                 <td className="px-8 py-6">
                                                     <span className={cn(
@@ -302,10 +302,10 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                             <td className="px-8 py-6">
                                                 <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase">{os.tipo_servicio}</span>
                                             </td>
-                                            <td className="px-8 py-6 text-xs font-black text-slate-500 italic">OP #{os.op?.numero_op}</td>
+                                            <td className="px-8 py-6 text-xs font-black text-slate-500 italic">OP #{os.op?.numero_doc}</td>
                                             <td className="px-8 py-6 text-sm font-black text-slate-900 text-right">S/ {os.total_costo?.toFixed(2)}</td>
                                             <td className="px-8 py-6 text-xs text-slate-500 font-bold uppercase tracking-tighter">
-                                                {new Date(os.fecha_entrega).toLocaleDateString('es-PE')}
+                                                {os.fecha_entrega_est ? new Date(os.fecha_entrega_est).toLocaleDateString('es-PE') : 'N/A'}
                                             </td>
                                             <td className="px-8 py-6">
                                                 <span className={cn(
