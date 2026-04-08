@@ -38,7 +38,7 @@ export default function OSDetailModal({ isOpen, onClose, os }: OSDetailModalProp
                 .from('service_order_materials')
                 .select(`
                     *,
-                    insumo:materials(nombre, codigo, unidad:units_of_measure!left(simbolo)),
+                    insumo:materials(nombre, codigo),
                     producto:products(nombre, codigo)
                 `)
                 .eq('os_id', os.id) as any)
