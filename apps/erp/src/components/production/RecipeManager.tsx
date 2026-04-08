@@ -51,21 +51,24 @@ export default function RecipeManager({ products }: RecipeManagerProps) {
     }, [])
 
     const fetchRecipes = async () => {
-        const { data } = await supabase
+        const { data } = await (supabase
             .from('recipes')
             .select(`
                 *,
-                product:products(nombre, codigo)
+                product:products(nombre, codigo),
+                recipe_items(*, material:materials(nombre, codigo, unidad:units(abreviatura))),
+                recipe_operations(*)
             `)
-            .order('created_at', { ascending: false })
+            .order('created_at', { ascending: false }) as any)
         setRecipes(data || [])
     }
 
     const fetchMaterials = async () => {
-        const { data } = await supabase
-            .from('products')
+        const { data } = await (supabase
+            .from('materials')
             .select('*')
-            .eq('tipo_item', 'MATERIAL')
+            .eq('activo', true)
+            .order('nombre', { ascending: true }) as any)
         setMaterials(data || [])
     }
 
@@ -132,27 +135,27 @@ export default function RecipeManager({ products }: RecipeManagerProps) {
             // Logic for saving recipe, its items and its operations
             // This assumes the new columns exist
             const { data: recipeData, error: recipeError } = editingRecipe
-                ? await supabase.from('recipes').update({
+                ? await (supabase.from('recipes').update({
                     product_id: formData.product_id,
                     descripcion: formData.descripcion,
                     costos_indirectos: formData.costos_indirectos,
                     merma_default: formData.merma_default,
                     estado: 'ACTIVA'
-                }).eq('id', editingRecipe.id).select().single()
-                : await supabase.from('recipes').insert([{
+                }).eq('id', editingRecipe.id).select().single() as any)
+                : await (supabase.from('recipes').insert([{
                     product_id: formData.product_id,
                     descripcion: formData.descripcion,
                     costos_indirectos: formData.costos_indirectos,
                     merma_default: formData.merma_default,
                     estado: 'ACTIVA'
-                }]).select().single()
+                }]).select().single() as any)
 
             if (recipeError) throw recipeError
 
             // Clear old items if editing
             if (editingRecipe) {
-                await supabase.from('recipe_items').delete().eq('recipe_id', recipeData.id)
-                await supabase.from('recipe_operations').delete().eq('recipe_id', recipeData.id)
+                await (supabase.from('recipe_items').delete().eq('recipe_id', recipeData.id) as any)
+                await (supabase.from('recipe_operations').delete().eq('recipe_id', recipeData.id) as any)
             }
 
             // Insert new items
@@ -163,7 +166,7 @@ export default function RecipeManager({ products }: RecipeManagerProps) {
                     cantidad: item.cantidad,
                     merma_porcentaje: item.merma_porcentaje
                 }))
-                await supabase.from('recipe_items').insert(itemsToInsert)
+                await (supabase.from('recipe_items').insert(itemsToInsert) as any)
             }
 
             // Insert new operations
@@ -173,7 +176,7 @@ export default function RecipeManager({ products }: RecipeManagerProps) {
                     tipo_operacion: op.tipo_operacion,
                     costo_base: op.costo_base
                 }))
-                await supabase.from('recipe_operations').insert(opsToInsert)
+                await (supabase.from('recipe_operations').insert(opsToInsert) as any)
             }
 
             toast.success("Receta guardada exitosamente")
@@ -191,24 +194,24 @@ export default function RecipeManager({ products }: RecipeManagerProps) {
         toast.info("Duplicando receta...")
         try {
             // Fetch detailed info
-            const { data: detailed } = await supabase
+            const { data: detailed } = await (supabase
                 .from('recipes')
                 .select('*, recipe_items(*), recipe_operations(*)')
                 .eq('id', recipe.id)
-                .single()
+                .single() as any)
 
             if (detailed) {
-                const { data: newRecipe } = await supabase.from('recipes').insert([{
+                const { data: newRecipe } = await (supabase.from('recipes').insert([{
                     ...detailed,
                     id: undefined,
                     created_at: undefined,
                     descripcion: `${detailed.descripcion} (Copia)`,
                     estado: 'BORRADOR'
-                }]).select().single()
+                }]).select().single() as any)
 
                 if (newRecipe) {
-                    await supabase.from('recipe_items').insert(detailed.recipe_items.map((i: any) => ({ ...i, id: undefined, recipe_id: newRecipe.id })))
-                    await supabase.from('recipe_operations').insert(detailed.recipe_operations.map((o: any) => ({ ...o, id: undefined, recipe_id: newRecipe.id })))
+                    await (supabase.from('recipe_items').insert(detailed.recipe_items.map((i: any) => ({ ...i, id: undefined, recipe_id: newRecipe.id }))) as any)
+                    await (supabase.from('recipe_operations').insert(detailed.recipe_operations.map((o: any) => ({ ...o, id: undefined, recipe_id: newRecipe.id }))) as any)
                     toast.success("Receta duplicada (en modo borrador)")
                     fetchRecipes()
                 }
