@@ -75,7 +75,10 @@ export default function ProductDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
                     {/* Gallery Column */}
                     <div className="lg:col-span-7">
-                        <ProductGallery images={product.imagenes_urls || []} />
+                        <ProductGallery images={[
+                            ...(product.imagen_url ? [product.imagen_url] : []),
+                            ...(product.imagenes_urls || [])
+                        ]} />
                     </div>
 
                     {/* Info Column */}
