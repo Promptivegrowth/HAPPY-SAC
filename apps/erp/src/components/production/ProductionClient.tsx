@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import RecipeManager from "@/components/production/RecipeManager"
+import PlanningManager from "@/components/production/PlanningManager"
+import CuttingManager from "@/components/production/CuttingManager"
 import ServiceOrderModal from "@/components/production/ServiceOrderModal"
 import OSDetailModal from "@/components/production/OSDetailModal"
 import OPDetailModal from "@/components/production/OPDetailModal"
@@ -328,49 +330,13 @@ export default function ProductionClient({ initialOrders, initialServices, produ
 
             {activeTab === 'planning' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="bg-white p-20 rounded-[3rem] border-4 border-dashed border-slate-100 flex flex-col items-center text-center max-w-4xl mx-auto">
-                        <div className="w-20 h-20 bg-pink-50 text-pink-600 rounded-3xl flex items-center justify-center mb-6">
-                            {/* @ts-ignore */}
-                            <Clock size={40} />
-                        </div>
-                        <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-4 italic">Planificación <span className="text-pink-600">Semanal</span></h2>
-                        <p className="text-slate-500 font-medium leading-relaxed mb-8">
-                            Este módulo permite consolidar múltiples Órdenes de Compra (OC) en un solo Plan de Producción optimizado.
-                            Agrupa por estilo, talla y color para maximizar la eficiencia de tu taller.
-                        </p>
-                        <div className="flex gap-4">
-                            <button className="px-8 py-4 bg-slate-900 text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-pink-600 transition-all shadow-xl shadow-slate-900/10">
-                                Crear Nuevo Plan
-                            </button>
-                            <button className="px-8 py-4 bg-white border-2 border-slate-200 text-slate-900 font-black rounded-2xl text-xs uppercase tracking-widest hover:border-pink-600 hover:text-pink-600 transition-all">
-                                Ver Consolidado
-                            </button>
-                        </div>
-                    </div>
+                    <PlanningManager />
                 </div>
             )}
 
             {activeTab === 'cutting' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="bg-white p-20 rounded-[3rem] border-4 border-dashed border-slate-100 flex flex-col items-center text-center max-w-4xl mx-auto">
-                        <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-6">
-                            {/* @ts-ignore */}
-                            <Box size={40} />
-                        </div>
-                        <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-4 italic">Corte e <span className="text-blue-600">Inventario</span></h2>
-                        <p className="text-slate-500 font-medium leading-relaxed mb-8">
-                            Control crítico de tendido y corte. Este módulo gestiona la explosión de materiales real vs teórica,
-                            calculando exactamente el consumo de tela y la merma producida por cada tizado.
-                        </p>
-                        <div className="flex gap-4">
-                            <button className="px-8 py-4 bg-slate-900 text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/10">
-                                Iniciar Tizado
-                            </button>
-                            <button className="px-8 py-4 bg-white border-2 border-slate-200 text-slate-900 font-black rounded-2xl text-xs uppercase tracking-widest hover:border-blue-600 hover:text-blue-600 transition-all">
-                                Reporte de Merma
-                            </button>
-                        </div>
-                    </div>
+                    <CuttingManager />
                 </div>
             )}
 
