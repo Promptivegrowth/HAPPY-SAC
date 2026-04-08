@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { ManualSaleManager } from "@/components/sales/ManualSaleManager"
 import {
     ShoppingCart,
     Search,
@@ -14,6 +15,9 @@ import {
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
+export const dynamic = 'force-dynamic'
+// Vercel Build Trigger: 2026-04-08 07:42
+
 export default async function SalesPage() {
     const supabase = createClient()
 
@@ -23,7 +27,7 @@ export default async function SalesPage() {
       *,
       customer:customers(nombre_completo, nro_doc)
     `)
-        .order('created_at', { ascending: false })
+        .order('fecha_registro', { ascending: false })
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -38,11 +42,11 @@ export default async function SalesPage() {
                         <Filter size={18} />
                         Filtros
                     </button>
-                    <Link href="/pos" className="flex items-center gap-2 px-4 py-2.5 bg-pink-600 hover:bg-pink-700 text-white font-semibold rounded-xl shadow-lg shadow-pink-600/10 transition-all">
-                        {/* @ts-ignore */}
-                        <Plus size={18} />
-                        Nueva Venta
+                    {/* Botón Nueva Venta: Ahora gestionado por un componente de cliente para abrir el modal */}
+                    <Link href="/pos" className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20">
+                        POS Pro
                     </Link>
+                    <ManualSaleManager />
                 </div>
             </div>
 
