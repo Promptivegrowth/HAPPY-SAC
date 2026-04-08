@@ -267,9 +267,14 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
                                         className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 outline-none transition-all shadow-inner text-slate-900 font-bold"
                                     >
                                         <option value="">Seleccionar...</option>
-                                        {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                                        ))}
+                                        {categories
+                                            .filter(cat => {
+                                                const isMaterialCat = cat.nombre.toUpperCase().includes('MATERIAL') || cat.nombre.toUpperCase().includes('TELAS')
+                                                return formData.tipo_item === 'MATERIAL' ? isMaterialCat : !isMaterialCat
+                                            })
+                                            .map(cat => (
+                                                <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                                            ))}
                                     </select>
                                 </div>
                                 <div className="space-y-2">
