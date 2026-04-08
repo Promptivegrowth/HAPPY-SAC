@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import {
-    Truck,
     Package,
     X,
     ClipboardList,
@@ -34,12 +33,13 @@ export default function OSDetailModal({ isOpen, onClose, os }: OSDetailModalProp
     const fetchMaterials = async () => {
         setIsLoading(true)
         try {
-            const { data, error } = await supabase.rpc('get_os_materials_detail', { p_os_id: os.id })
+            // Leer la verdad directamente del Kardex
+            const { data, error } = await supabase.rpc('get_os_materials_from_kardex', { p_os_id: os.id })
 
             if (error) throw error
             setMaterials(data || [])
         } catch (error) {
-            console.error("Error fetching OS materials:", error)
+            console.error("Error fetching OS materials from Kardex:", error)
         } finally {
             setIsLoading(false)
         }
@@ -132,25 +132,23 @@ export default function OSDetailModal({ isOpen, onClose, os }: OSDetailModalProp
                                             <td colSpan={2} className="px-8 py-10 text-center text-slate-400 italic text-xs">Cargando materiales...</td>
                                         </tr>
                                     ) : materials.length > 0 ? (
-                                        materials.map((m: any) => {
-                                            return (
-                                                <tr key={m.id} className="hover:bg-white/80 transition-all">
-                                                    <td className="px-8 py-4">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-xs font-black text-slate-900">{m.nombre_item}</span>
-                                                            <span className="text-[10px] text-slate-400 font-bold uppercase">{m.codigo_item}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-8 py-4 text-right">
-                                                        <span className="text-xs font-black text-indigo-600">{m.cantidad_entregada} UND</span>
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })
+                                        materials.map((m: any) => (
+                                            <tr key={m.id} className="hover:bg-white/80 transition-all">
+                                                <td className="px-8 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-black text-slate-900">{m.nombre_item}</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase">{m.codigo_item}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-4 text-right">
+                                                    <span className="text-xs font-black text-indigo-600">{m.cantidad} UND</span>
+                                                </td>
+                                            </tr>
+                                        ))
                                     ) : (
                                         <tr>
                                             <td colSpan={2} className="px-8 py-20 text-center">
-                                                <p className="text-xs text-slate-400 font-bold italic">No hay registros de materiales para esta orden.</p>
+                                                <p className="text-xs text-slate-400 font-bold italic">No hay registros de movimientos en el Kardex para esta orden.</p>
                                             </td>
                                         </tr>
                                     )}
