@@ -74,7 +74,8 @@ export function ProductList({ initialData }: ProductListProps) {
         const matchesSearch = item.nombre.toLowerCase().includes(search.toLowerCase()) ||
             item.codigo.toLowerCase().includes(search.toLowerCase())
         const matchesTab = activeTab === "materials" ? item.tipo_item === "MATERIAL" : item.tipo_item === "PRODUCTO"
-        return matchesSearch && matchesTab
+        const isActivo = item.activo !== false
+        return matchesSearch && matchesTab && isActivo
     })
 
     return (
