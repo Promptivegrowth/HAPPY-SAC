@@ -34,14 +34,7 @@ export default function OSDetailModal({ isOpen, onClose, os }: OSDetailModalProp
     const fetchMaterials = async () => {
         setIsLoading(true)
         try {
-            const { data, error } = await (supabase
-                .from('service_order_materials')
-                .select(`
-                    *,
-                    insumo:materials(nombre, codigo),
-                    producto:products(nombre, codigo)
-                `)
-                .eq('os_id', os.id) as any)
+            const { data, error } = await supabase.rpc('get_os_materials_detail', { p_os_id: os.id })
 
             if (error) throw error
             setMaterials(data || [])
@@ -140,17 +133,16 @@ export default function OSDetailModal({ isOpen, onClose, os }: OSDetailModalProp
                                         </tr>
                                     ) : materials.length > 0 ? (
                                         materials.map((m: any) => {
-                                            const itemInfo = m.insumo || m.producto;
                                             return (
                                                 <tr key={m.id} className="hover:bg-white/80 transition-all">
                                                     <td className="px-8 py-4">
                                                         <div className="flex flex-col">
-                                                            <span className="text-xs font-black text-slate-900">{itemInfo?.nombre}</span>
-                                                            <span className="text-[10px] text-slate-400 font-bold uppercase">{itemInfo?.codigo}</span>
+                                                            <span className="text-xs font-black text-slate-900">{m.nombre_item}</span>
+                                                            <span className="text-[10px] text-slate-400 font-bold uppercase">{m.codigo_item}</span>
                                                         </div>
                                                     </td>
                                                     <td className="px-8 py-4 text-right">
-                                                        <span className="text-xs font-black text-indigo-600">{m.cantidad_entregada} {m.insumo?.unidad?.simbolo || 'UND'}</span>
+                                                        <span className="text-xs font-black text-indigo-600">{m.cantidad_entregada} UND</span>
                                                     </td>
                                                 </tr>
                                             )
