@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, X, Search, ShoppingCart, User, CreditCard, Check, Loader2 } from "lucide-react"
+import { Plus, X, Search, ShoppingCart, User, CreditCard, Check, Loader2, UserPlus } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { getActiveProducts, getCustomersList, createManualSale } from "../../app/(dashboard)/sales/actions"
+import { getActiveProducts, getCustomersList, createManualSale, createCustomer } from "../../app/(dashboard)/sales/actions"
 
 // Icon Wrappers for Linting
 const PlusIcon = Plus as any
@@ -14,6 +14,7 @@ const UserIcon = User as any
 const CreditCardIcon = CreditCard as any
 const CheckIcon = Check as any
 const Loader2Icon = Loader2 as any
+const UserPlusIcon = UserPlus as any
 
 export function ManualSaleManager() {
     const [isOpen, setIsOpen] = useState(false)
@@ -26,6 +27,14 @@ export function ManualSaleManager() {
     const [searchProduct, setSearchProduct] = useState("")
     const [searchCustomer, setSearchCustomer] = useState("")
 
+    // New Customer Form State
+    const [isCreatingCustomer, setIsCreatingCustomer] = useState(false)
+    const [newCustomer, setNewCustomer] = useState({
+        nombre_completo: "",
+        tipo_documento: "DNI",
+        nro_doc: ""
+    })
+
     // Form State
     const [saleType, setSaleType] = useState<'FISICA' | 'ECOMMERCE' | 'MAYORISTA'>('FISICA')
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
@@ -33,20 +42,21 @@ export function ManualSaleManager() {
     const [paymentMethod, setPaymentMethod] = useState("EFECTIVO")
 
     // Load Data
+    const loadData = async () => {
+        setLoading(true)
+        try {
+            const [p, c] = await Promise.all([getActiveProducts(), getCustomersList()])
+            setProducts(p as any[])
+            setCustomers(c as any[])
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     useEffect(() => {
         if (isOpen) {
-            const loadData = async () => {
-                setLoading(true)
-                try {
-                    const [p, c] = await Promise.all([getActiveProducts(), getCustomersList()])
-                    setProducts(p as any[])
-                    setCustomers(c as any[])
-                } catch (err) {
-                    console.error(err)
-                } finally {
-                    setLoading(false)
-                }
-            }
             loadData()
         }
     }, [isOpen])
@@ -62,6 +72,27 @@ export function ManualSaleManager() {
 
     const removeFromCart = (id: string) => {
         setCart(cart.filter(i => i.id !== id))
+    }
+
+    const handleCreateCustomer = async () => {
+        if (!newCustomer.nombre_completo || !newCustomer.nro_doc) {
+            alert("Por favor completa los datos del cliente")
+            return
+        }
+        setLoading(true)
+        try {
+            const customer = await createCustomer(newCustomer)
+            setSelectedCustomer(customer)
+            setIsCreatingCustomer(false)
+            setNewCustomer({ nombre_completo: "", tipo_documento: "DNI", nro_doc: "" })
+            // Recargar lista de clientes para futuros usos sin cerrar el modal
+            const cList = await getCustomersList()
+            setCustomers(cList as any[])
+        } catch (err) {
+            alert("Error al crear cliente: " + (err as any).message)
+        } finally {
+            setLoading(false)
+        }
     }
 
     const total = cart.reduce((acc, item) => acc + (item.precio * item.quantity), 0)
@@ -86,7 +117,7 @@ export function ManualSaleManager() {
             setStep(1)
             setCart([])
             setSelectedCustomer(null)
-            window.location.reload() // Recargar para ver la nueva venta
+            window.location.reload()
         } catch (err) {
             alert("Error al registrar: " + (err as any).message)
         } finally {
@@ -218,36 +249,107 @@ export function ManualSaleManager() {
                         )}
 
                         {step === 2 && (
-                            <div className="animate-in slide-in-from-right-4 duration-300 space-y-8">
-                                <h3 className="text-xl font-bold text-slate-900">Asignar Cliente</h3>
-                                <div className="relative group">
-                                    <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-pink-500" size={20} />
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar por nombre o DNI/RUC..."
-                                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-pink-200 focus:bg-white transition-all text-sm font-medium"
-                                        value={searchCustomer}
-                                        onChange={(e) => setSearchCustomer(e.target.value)}
-                                    />
+                            <div className="animate-in slide-in-from-right-4 duration-300 space-y-8 h-full flex flex-col">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-bold text-slate-900">Asignar Cliente</h3>
+                                    <button
+                                        onClick={() => setIsCreatingCustomer(!isCreatingCustomer)}
+                                        className={cn(
+                                            "flex items-center gap-2 px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                            isCreatingCustomer ? "bg-slate-100 text-slate-600" : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-100"
+                                        )}
+                                    >
+                                        {isCreatingCustomer ? <>Cancelar</> : <><UserPlusIcon size={14} /> Nuevo Cliente</>}
+                                    </button>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
-                                    {filteredCustomers.map((c) => (
-                                        <button
-                                            key={c.id}
-                                            onClick={() => setSelectedCustomer(c)}
-                                            className={cn(
-                                                "p-5 rounded-3xl border-2 text-left flex items-center gap-4 transition-all",
-                                                selectedCustomer?.id === c.id ? "border-pink-500 bg-pink-50 shadow-md" : "border-slate-100 hover:border-slate-200"
-                                            )}
-                                        >
-                                            <div className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400"><UserIcon size={20} /></div>
+
+                                {isCreatingCustomer ? (
+                                    <div className="bg-slate-50/50 border-2 border-slate-100 rounded-[2.5rem] p-10 space-y-6 flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full">
+                                        <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-emerald-500 shadow-xl shadow-emerald-50 mb-4 border border-slate-100">
+                                            <UserPlusIcon size={32} />
+                                        </div>
+                                        <div className="w-full space-y-4">
                                             <div>
-                                                <p className="text-sm font-black text-slate-900">{c.nombre_completo}</p>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{c.tipo_documento}: {c.nro_doc}</p>
+                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4 mb-2 block">Nombre completo o Razón Social</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Ej: Luigi SAC o Juan Pérez"
+                                                    className="w-full px-6 py-4 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-emerald-200 transition-all font-medium text-sm"
+                                                    value={newCustomer.nombre_completo}
+                                                    onChange={e => setNewCustomer({ ...newCustomer, nombre_completo: e.target.value })}
+                                                />
                                             </div>
-                                        </button>
-                                    ))}
-                                </div>
+                                            <div className="flex gap-4">
+                                                <div className="w-1/3">
+                                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4 mb-2 block">Tipo Doc.</label>
+                                                    <select
+                                                        className="w-full px-6 py-4 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-emerald-200 transition-all font-bold text-xs cursor-pointer"
+                                                        value={newCustomer.tipo_documento}
+                                                        onChange={e => setNewCustomer({ ...newCustomer, tipo_documento: e.target.value })}
+                                                    >
+                                                        <option value="DNI">DNI</option>
+                                                        <option value="RUC">RUC</option>
+                                                        <option value="CE">C.E.</option>
+                                                    </select>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4 mb-2 block">Número de Documento</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="8 o 11 dígitos"
+                                                        className="w-full px-6 py-4 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-emerald-200 transition-all font-medium text-sm"
+                                                        value={newCustomer.nro_doc}
+                                                        onChange={e => setNewCustomer({ ...newCustomer, nro_doc: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={handleCreateCustomer}
+                                                disabled={loading}
+                                                className="w-full py-5 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-[1.5rem] shadow-xl shadow-emerald-100 transition-all uppercase tracking-widest text-[11px] flex items-center justify-center gap-3 mt-4"
+                                            >
+                                                {loading ? <Loader2Icon className="animate-spin" size={18} /> : <><CheckIcon size={18} /> Registrar y Seleccionar</>}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="relative group">
+                                            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-pink-500" size={20} />
+                                            <input
+                                                type="text"
+                                                placeholder="Buscar por nombre o DNI/RUC..."
+                                                className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-pink-200 focus:bg-white transition-all text-sm font-medium"
+                                                value={searchCustomer}
+                                                onChange={(e) => setSearchCustomer(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                            {filteredCustomers.map((c) => (
+                                                <button
+                                                    key={c.id}
+                                                    onClick={() => setSelectedCustomer(c)}
+                                                    className={cn(
+                                                        "p-5 rounded-3xl border-2 text-left flex items-center gap-4 transition-all h-fit",
+                                                        selectedCustomer?.id === c.id ? "border-pink-500 bg-pink-50 shadow-md" : "border-slate-100 hover:border-slate-200 bg-white"
+                                                    )}
+                                                >
+                                                    <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-400"><UserIcon size={20} /></div>
+                                                    <div>
+                                                        <p className="text-sm font-black text-slate-900">{c.nombre_completo}</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{c.tipo_documento}: {c.nro_doc}</p>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                            {filteredCustomers.length === 0 && (
+                                                <div className="col-span-full py-20 text-center text-slate-300">
+                                                    <UserIcon size={40} className="mx-auto mb-4 opacity-50" />
+                                                    <p className="font-bold">No se encontraron clientes</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         )}
 
@@ -374,7 +476,7 @@ export function ManualSaleManager() {
                         Regresar
                     </button>
                     <button
-                        disabled={loading || (step === 2 && !selectedCustomer) || (step === 3 && cart.length === 0)}
+                        disabled={loading || (step === 2 && !selectedCustomer && !isCreatingCustomer) || (step === 3 && cart.length === 0)}
                         onClick={step < 4 ? () => setStep(s => s + 1) : handleFinish}
                         className="px-12 py-5 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-3xl transition-all shadow-2xl shadow-slate-200 uppercase tracking-widest text-xs flex items-center gap-3 disabled:bg-slate-200 disabled:shadow-none"
                     >

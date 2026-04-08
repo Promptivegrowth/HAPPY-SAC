@@ -69,3 +69,17 @@ export async function createManualSale(saleData: any) {
     revalidatePath('/sales')
     return { success: true, saleId: sale.id }
 }
+
+export async function createCustomer(customerData: { nombre_completo: string, nro_doc: string, tipo_documento: string }) {
+    const supabase = createClient()
+    const { data, error } = await (supabase.from('customers') as any)
+        .insert({
+            ...customerData,
+            company_id: '24b7a942-8a5a-434f-beac-d6fd222702ba'
+        })
+        .select()
+        .single()
+
+    if (error) throw error
+    return data
+}

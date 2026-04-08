@@ -9,30 +9,30 @@ import Image from 'next/image'
 
 const SLIDES = [
     {
-        image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=2000&auto=format&fit=crop', // Reemplazar luego con reales
-        title: 'NUEVA COLECCIÓN',
-        subtitle: 'FESTIVAL PERÚ',
-        description: 'Celebra nuestras raíces con los disfraces más auténticos y premium del mercado.',
+        image: '/images/hero_magic.png',
+        title: 'EXCLUSIVIDAD',
+        subtitle: 'MAGIA EN CADA HILO',
+        description: 'Descubre nuestra colección de disfraces premium elaborados con los más altos estándares de calidad y detalle.',
         cta: 'VER COLECCIÓN',
-        href: '/catalogo?categoria=fiestas-patrias',
+        href: '/catalogo',
         color: 'from-[--brand-primary]/80'
     },
     {
-        image: 'https://images.unsplash.com/photo-1547032175-7fc8c7bd15b3?q=80&w=2000&auto=format&fit=crop',
-        title: 'PRÓXIMAMENTE',
-        subtitle: 'HALLOWEEN 2024',
-        description: 'Sé el alma de la fiesta con diseños exclusivos que no encontrarás en ningún otro lugar.',
-        cta: 'PRE-ORDENAR YA',
-        href: '/catalogo?categoria=halloween',
-        color: 'from-orange-600/80'
+        image: '/images/hero_adventure.png',
+        title: 'AVENTURA',
+        subtitle: 'DIVERSIÓN SIN LÍMITES',
+        description: 'Prepara a tus pequeños para la aventura con diseños diseñados para resistir el juego y fomentar la imaginación.',
+        cta: 'EXPLORAR TODO',
+        href: '/catalogo',
+        color: 'from-blue-600/80'
     },
     {
-        image: 'https://images.unsplash.com/photo-1512909006721-3d6018887183?q=80&w=2000&auto=format&fit=crop',
-        title: 'RECUERDOS MÁGICOS',
-        subtitle: 'LÍNEA INFANTIL',
-        description: 'Transforma sus sueños en realidad con telas hipoalergénicas y acabados de lujo.',
+        image: '/images/hero_style.png',
+        title: 'NUEVA TEMPORADA',
+        subtitle: 'ESTILO CON ALEGRÍA',
+        description: 'Explora las últimas tendencias en moda infantil que combinan comodidad, color y elegancia para toda ocasión.',
         cta: 'COMPRAR AHORA',
-        href: '/catalogo?categoria=ninos',
+        href: '/catalogo',
         color: 'from-[--brand-secondary]/80'
     }
 ]
@@ -54,12 +54,16 @@ export function HeroSlider() {
                                 src={slide.image}
                                 alt={slide.title}
                                 fill
-                                className="object-cover opacity-60"
+                                className="object-cover opacity-60 transition-transform duration-[10s] hover:scale-110"
                                 priority={index === 0}
                             />
 
+                            {/* Black Overlay for readability */}
+                            <div className="absolute inset-0 bg-slate-900/40" />
+
                             {/* Gradient Overlay */}
-                            <div className={`absolute inset-0 bg-gradient-to-r ${slide.color} to-transparent`} />
+                            {/* Color Gradient Overlay */}
+                            <div className={`absolute inset-0 bg-gradient-to-r ${slide.color} via-transparent to-transparent opacity-80`} />
 
                             {/* Content */}
                             <div className="relative h-full max-w-[--container-max] mx-auto px-6 flex flex-col justify-center">
