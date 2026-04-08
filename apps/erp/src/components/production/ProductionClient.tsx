@@ -22,6 +22,7 @@ import { toast } from "sonner"
 import RecipeManager from "@/components/production/RecipeManager"
 import ServiceOrderModal from "@/components/production/ServiceOrderModal"
 import OSDetailModal from "@/components/production/OSDetailModal"
+import OPDetailModal from "@/components/production/OPDetailModal"
 
 interface ProductionClientProps {
     initialOrders: any[]
@@ -39,6 +40,8 @@ export default function ProductionClient({ initialOrders, initialServices, produ
     const [isOSDetailOpen, setIsOSDetailOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedOPForOS, setSelectedOPForOS] = useState<any>(null)
+    const [selectedOPDetail, setSelectedOPDetail] = useState<any>(null)
+    const [isOPDetailOpen, setIsOPDetailOpen] = useState(false)
 
     const handleCancelOS = async (osId: string) => {
         if (!confirm("¿Estás seguro de cancelar esta Orden de Servicio?")) return
@@ -186,8 +189,22 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                             : 0
 
                                         return (
-                                            <tr key={order.id} className="hover:bg-slate-50/80 transition-all group">
-                                                <td className="px-8 py-6 text-xs font-black text-slate-900 tracking-widest">#{order.numero_doc || order.id.slice(0, 8)}</td>
+                                            <tr
+                                                key={order.id}
+                                                className="hover:bg-slate-50/80 transition-all group cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectedOPDetail(order)
+                                                    setIsOPDetailOpen(true)
+                                                }}
+                                            >
+                                                <td className="px-8 py-6">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-black text-slate-900 tracking-widest">#{order.numero_doc || order.id.slice(0, 8)}</span>
+                                                        <span className="text-[9px] text-pink-500 font-bold flex items-center gap-1">
+                                                            <Clock size={10} /> {order.hora_inicio || '08:00'}
+                                                        </span>
+                                                    </div>
+                                                </td>
                                                 <td className="px-8 py-6">
                                                     <div className="flex flex-col">
                                                         <span className="text-sm font-black text-slate-950 tracking-tight">{order.items?.[0]?.product?.nombre}</span>
@@ -400,6 +417,12 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                 isOpen={isOSDetailOpen}
                 onClose={() => setIsOSDetailOpen(false)}
                 os={selectedOS}
+            />
+
+            <OPDetailModal
+                isOpen={isOPDetailOpen}
+                onClose={() => setIsOPDetailOpen(false)}
+                op={selectedOPDetail}
             />
         </div>
     )

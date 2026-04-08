@@ -8,6 +8,7 @@ export default async function NewProductionPage() {
     const { data: products } = await supabase
         .from('products')
         .select('id, nombre, codigo')
+        .eq('tipo_item', 'PRODUCTO')
         .order('nombre', { ascending: true })
 
     return (

@@ -14,7 +14,8 @@ import {
     Info,
     CheckCircle2,
     Box,
-    Truck
+    Clock,
+    Calendar as CalendarIcon
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -24,10 +25,16 @@ export default function OPForm({ products }: { products: any[] }) {
     const supabase = createClient()
     const [isLoading, setIsLoading] = useState(false)
     const [selectedProduct, setSelectedProduct] = useState<string>("")
-    const [items, setItems] = useState<any[]>([{ size_id: "", quantity: 0 }])
+    const [items, setItems] = useState<any[]>([{ size_id: "", quantity: 1 }])
     const [sizes, setSizes] = useState<any[]>([])
     const [explosion, setExplosion] = useState<any[]>([])
     const [isCalculating, setIsCalculating] = useState(false)
+
+    // Nuevos campos de tiempo
+    const [startTime, setStartTime] = useState("08:00")
+    const [deliveryDate, setDeliveryDate] = useState(
+        new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    )
 
     // Fetch sizes when product changes
     useEffect(() => {
@@ -62,7 +69,6 @@ export default function OPForm({ products }: { products: any[] }) {
 
         setIsCalculating(true)
         try {
-            // 1. Obtener la receta activa para el producto
             const { data: recipe, error: recipeError } = await (supabase
                 .from('recipes')
                 .select('id, merma_default')
@@ -78,7 +84,6 @@ export default function OPForm({ products }: { products: any[] }) {
                 return
             }
 
-            // 2. Obtener los ítems de la receta (ingredientes)
             const { data: recipeItems, error: itemsError } = await (supabase
                 .from('recipe_items')
                 .select('material_id, cantidad, merma_porcentaje')
@@ -92,7 +97,6 @@ export default function OPForm({ products }: { products: any[] }) {
                 return
             }
 
-            // 3. Obtener los detalles de los materiales
             const materialIds = recipeItems.map((ri: any) => ri.material_id)
             const { data: materialsData, error: materialsError } = await (supabase
                 .from('materials')
@@ -101,7 +105,6 @@ export default function OPForm({ products }: { products: any[] }) {
 
             if (materialsError) throw materialsError
 
-            // Mapear detalles de materiales para rápido acceso
             const materialsMap = (materialsData || []).reduce((acc: any, m: any) => {
                 acc[m.id] = m
                 return acc
@@ -109,7 +112,6 @@ export default function OPForm({ products }: { products: any[] }) {
 
             const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0)
 
-            // 4. Calcular explosión vinculando los datos manualmente
             const calculated = recipeItems.map((item: any) => {
                 const materialInfo = materialsMap[item.material_id] || { nombre: 'Desconocido', codigo: 'S/C' }
                 const baseAmount = item.cantidad * totalQuantity
@@ -138,13 +140,16 @@ export default function OPForm({ products }: { products: any[] }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!selectedProduct || items.some(i => !i.size_id || i.quantity <= 0)) return
+        if (explosion.length === 0) {
+            toast.error("Calcula la explosión antes de lanzar la OP")
+            return
+        }
 
         setIsLoading(true)
         try {
             const { data: company } = await (supabase.from('companies').select('id').single() as any)
 
             // 1. Crear Cabecera de la Orden de Producción
-            // Columnas reales: company_id, total_prendas, fecha_entrega_est, estado, numero_doc, etc.
             const totalPrendas = items.reduce((sum, i) => sum + i.quantity, 0)
             const { data: op, error: opError } = await ((supabase
                 .from('production_orders') as any)
@@ -152,7 +157,8 @@ export default function OPForm({ products }: { products: any[] }) {
                     company_id: company?.id,
                     total_prendas: totalPrendas,
                     fecha_emision: new Date().toISOString(),
-                    fecha_entrega_est: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+                    fecha_entrega_est: new Date(deliveryDate).toISOString(),
+                    hora_inicio: startTime,
                     estado: 'PENDIENTE',
                     numero_doc: `OP-${Date.now().toString().slice(-6)}`,
                     referencia_cliente: 'GENERADO DESDE ERP'
@@ -162,8 +168,7 @@ export default function OPForm({ products }: { products: any[] }) {
 
             if (opError) throw opError
 
-            // 2. Crear los ítems (Detalle) de la OP
-            // Columnas reales: order_id, product_id, product_size_id, cantidad_pedida, estado_item
+            // 2. Crear los ítems (Disfraz/Tallas) de la OP
             const orderItems = items
                 .filter(item => item.size_id && item.quantity > 0)
                 .map(item => ({
@@ -179,8 +184,23 @@ export default function OPForm({ products }: { products: any[] }) {
                 const { error: itemsError } = await ((supabase
                     .from('production_order_items') as any)
                     .insert(orderItems) as any)
-
                 if (itemsError) throw itemsError
+            }
+
+            // 3. Persistir la Explosión de Materiales (PARA EL MONITOR)
+            const orderMaterials = explosion.map(m => ({
+                order_id: op.id,
+                material_id: m.material_id,
+                cantidad_base: m.cantidad_base,
+                merma: m.merma,
+                total: m.total
+            }))
+
+            if (orderMaterials.length > 0) {
+                const { error: mError } = await (supabase
+                    .from('production_order_materials')
+                    .insert(orderMaterials))
+                if (mError) throw mError
             }
 
             toast.success(`OP #${op.numero_doc || op.id.slice(0, 8)} creada exitosamente`)
@@ -214,21 +234,50 @@ export default function OPForm({ products }: { products: any[] }) {
                     <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-2xl shadow-slate-200/50 space-y-8 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[5rem] -mr-10 -mt-10" />
 
-                        <div className="space-y-4 relative">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Estilo / Disfraz a Producir</label>
-                            <select
-                                className="w-full px-6 py-5 bg-slate-50 border border-slate-100 rounded-[2rem] focus:ring-8 focus:ring-pink-500/5 focus:border-pink-500 outline-none transition-all font-black text-xl text-slate-900"
-                                value={selectedProduct}
-                                onChange={(e) => setSelectedProduct(e.target.value)}
-                                required
-                            >
-                                <option value="">Seleccionar producto...</option>
-                                {products.map(p => <option key={p.id} value={p.id}>{p.nombre} ({p.codigo})</option>)}
-                            </select>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Estilo / Disfraz a Producir</label>
+                                <select
+                                    className="w-full px-6 py-5 bg-slate-50 border border-slate-100 rounded-[2rem] focus:ring-8 focus:ring-pink-500/5 focus:border-pink-500 outline-none transition-all font-black text-xl text-slate-900"
+                                    value={selectedProduct}
+                                    onChange={(e) => setSelectedProduct(e.target.value)}
+                                    required
+                                >
+                                    <option value="">Seleccionar producto...</option>
+                                    {products.map(p => <option key={p.id} value={p.id}>{p.nombre} ({p.codigo})</option>)}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1 flex items-center gap-2">
+                                        <Clock size={10} /> Inicio Operativo
+                                    </label>
+                                    <input
+                                        type="time"
+                                        className="w-full px-6 py-5 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-900 focus:ring-4 focus:ring-pink-500/10 outline-none transition-all"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1 flex items-center gap-2">
+                                        <CalendarIcon size={10} /> Entrega Estimada
+                                    </label>
+                                    <input
+                                        type="date"
+                                        className="w-full px-6 py-5 bg-slate-50 border border-slate-100 rounded-2xl font-black text-xs text-slate-900 focus:ring-4 focus:ring-pink-500/10 outline-none transition-all"
+                                        value={deliveryDate}
+                                        onChange={(e) => setDeliveryDate(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Tallas y Cantidades */}
-                        <div className="space-y-6 pt-4">
+                        <div className="space-y-6 pt-4 border-t border-slate-50">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
                                     {/* @ts-ignore */}
@@ -280,14 +329,16 @@ export default function OPForm({ products }: { products: any[] }) {
                                                 required
                                             />
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveItem(index)}
-                                            className="p-4 text-slate-300 hover:text-rose-600 transition-colors opacity-0 group-hover:opacity-100"
-                                        >
-                                            {/* @ts-ignore */}
-                                            <Trash2 size={20} />
-                                        </button>
+                                        {items.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveItem(index)}
+                                                className="p-4 text-slate-300 hover:text-rose-600 transition-colors opacity-0 group-hover:opacity-100"
+                                            >
+                                                {/* @ts-ignore */}
+                                                <Trash2 size={20} />
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -313,7 +364,7 @@ export default function OPForm({ products }: { products: any[] }) {
                             <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
                                 {/* @ts-ignore */}
                                 <CheckCircle2 size={16} className="text-emerald-500" />
-                                Requerimientos Totales (con 3% Merma)
+                                Requerimientos Totales (con Merma)
                             </h3>
                             <div className="bg-slate-50/50 rounded-[2rem] border border-slate-100 overflow-hidden">
                                 <table className="w-full text-left">
@@ -368,12 +419,12 @@ export default function OPForm({ products }: { products: any[] }) {
                                     <span className="font-bold">{items.filter(i => i.size_id).length}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-xs">
-                                    <span className="opacity-50">Días Estimados</span>
-                                    <span className="font-bold text-blue-400">10-14 días</span>
-                                </div>
-                                <div className="flex justify-between items-center text-xs">
                                     <span className="opacity-50">Fecha Entrega</span>
-                                    <span className="font-bold">{new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toLocaleDateString()}</span>
+                                    <span className="font-bold">{new Date(deliveryDate).toLocaleDateString('es-PE')}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs text-pink-500">
+                                    <span className="opacity-50">Hora de Inicio</span>
+                                    <span className="font-black tracking-widest">{startTime}</span>
                                 </div>
                             </div>
                         </div>
