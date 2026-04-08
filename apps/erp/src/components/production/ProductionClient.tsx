@@ -12,7 +12,8 @@ import {
     Search,
     ChevronRight,
     ExternalLink,
-    Box
+    Box,
+    AlertCircle
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -45,7 +46,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
         try {
             const { error } = await (supabase
                 .from('service_orders')
-                .update({ estado: 'CANCELADO' })
+                .update({ estado: 'CANCELADO' } as any)
                 .eq('id', osId) as any)
 
             if (error) throw error
@@ -66,7 +67,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Control de <span className="text-pink-600">Producción</span> <span className="text-xs align-top text-slate-300">v3.0</span></h1>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Control de <span className="text-pink-600">Producción</span> <span className="text-xs align-top text-slate-300">v3.1</span></h1>
                     <p className="text-slate-500 mt-1 font-medium italic">Gestión integral de disfraces, recetas y servicios tercerizados.</p>
                 </div>
                 {activeTab === 'orders' && (
@@ -113,8 +114,10 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-[4rem] -mr-8 -mt-8 group-hover:bg-blue-100 transition-colors" />
                             <div className="flex items-center justify-between mb-4 relative">
                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">OPs Activas</span>
-                                {/* @ts-ignore */}
-                                <div className="p-2 bg-blue-50 text-blue-600 rounded-xl"><Clock size={16} /></div>
+                                <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                                    {/* @ts-ignore */}
+                                    <Clock size={16} />
+                                </div>
                             </div>
                             <div className="text-4xl font-black text-slate-900 relative tracking-tighter">{orders?.filter(o => o.estado === 'PROCESO').length || 0}</div>
                         </div>
@@ -123,8 +126,10 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                             <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-[4rem] -mr-8 -mt-8 group-hover:bg-amber-100 transition-colors" />
                             <div className="flex items-center justify-between mb-4 relative">
                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600">Por Iniciar</span>
-                                {/* @ts-ignore */}
-                                <div className="p-2 bg-amber-50 text-amber-600 rounded-xl"><Factory size={16} /></div>
+                                <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                                    {/* @ts-ignore */}
+                                    <Factory size={16} />
+                                </div>
                             </div>
                             <div className="text-4xl font-black text-slate-900 relative tracking-tighter">{orders?.filter(o => o.estado === 'PENDIENTE').length || 0}</div>
                         </div>
@@ -133,8 +138,10 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-[4rem] -mr-8 -mt-8 group-hover:bg-emerald-100 transition-colors" />
                             <div className="flex items-center justify-between mb-4 relative">
                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">Completadas</span>
-                                {/* @ts-ignore */}
-                                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><CheckCircle2 size={16} /></div>
+                                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                                    {/* @ts-ignore */}
+                                    <CheckCircle2 size={16} />
+                                </div>
                             </div>
                             <div className="text-4xl font-black text-slate-900 relative tracking-tighter">{orders?.filter(o => o.estado === 'COMPLETADO').length || 0}</div>
                         </div>
@@ -335,7 +342,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                                 <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase">{os.tipo_servicio}</span>
                                             </td>
                                             <td className="px-8 py-6 text-xs font-black text-slate-500 italic">OP #{os.op?.numero_doc || 'N/A'}</td>
-                                            <td className="px-8 py-6 text-sm font-black text-slate-900 text-right">S/ {os.total_costo?.toFixed(2)}</td>
+                                            <td className="px-8 py-6 text-sm font-black text-slate-900 text-right">S/ {(os.total_costo || 0).toFixed(2)}</td>
                                             <td className="px-8 py-6 text-xs text-slate-500 font-bold uppercase tracking-tighter">
                                                 {os.fecha_entrega ? new Date(os.fecha_entrega).toLocaleDateString('es-PE') : 'N/A'}
                                             </td>
@@ -361,18 +368,6 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                                         Cancelar
                                                     </button>
                                                 )}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedItemForKardex(os);
-                                                        setIsKardexOpen(true);
-                                                    }}
-                                                    className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all ml-2"
-                                                    title="Ver Kardex (Historial)"
-                                                >
-                                                    {/* @ts-ignore */}
-                                                    <History size={16} />
-                                                </button>
                                             </td>
                                         </tr>
                                     ))}
