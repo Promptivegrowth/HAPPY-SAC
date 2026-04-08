@@ -11,7 +11,8 @@ import {
     Factory,
     Search,
     ChevronRight,
-    ExternalLink
+    ExternalLink,
+    Box
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -32,7 +33,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedOPForOS, setSelectedOPForOS] = useState<any>(null)
 
-    const filteredOrders = orders.filter(o =>
+    const filteredOrders = (orders || []).filter(o =>
         o.numero_op?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         o.product?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -58,7 +59,9 @@ export default function ProductionClient({ initialOrders, initialServices, produ
             {/* Tabs */}
             <div className="flex items-center gap-2 border-b border-slate-200 pb-px overflow-x-auto no-scrollbar">
                 {[
-                    { id: 'orders', label: 'Órdenes de Prod.', icon: ClipboardList },
+                    { id: 'orders', label: 'Órdenes de Prod. (OP)', icon: ClipboardList },
+                    { id: 'planning', label: 'Plan de Trabajo', icon: Clock },
+                    { id: 'cutting', label: 'Corte (Crítico)', icon: Box },
                     { id: 'recipes', label: 'Fichas Técnicas', icon: FileText },
                     { id: 'services', label: 'Servicios (OS)', icon: Truck },
                 ].map((tab) => (
@@ -66,7 +69,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={cn(
-                            "flex items-center gap-2 px-6 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2",
+                            "flex items-center gap-2 px-6 py-4 text-xs font-black uppercase tracking-widest transition-all border-b-2 whitespace-nowrap",
                             activeTab === tab.id
                                 ? "border-pink-600 text-pink-600 bg-pink-50/50"
                                 : "border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50"
@@ -221,6 +224,54 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                 </div>
             )}
 
+            {activeTab === 'planning' && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-white p-20 rounded-[3rem] border-4 border-dashed border-slate-100 flex flex-col items-center text-center max-w-4xl mx-auto">
+                        <div className="w-20 h-20 bg-pink-50 text-pink-600 rounded-3xl flex items-center justify-center mb-6">
+                            {/* @ts-ignore */}
+                            <Clock size={40} />
+                        </div>
+                        <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-4 italic">Planificación <span className="text-pink-600">Semanal</span></h2>
+                        <p className="text-slate-500 font-medium leading-relaxed mb-8">
+                            Este módulo permite consolidar múltiples Órdenes de Compra (OC) en un solo Plan de Producción optimizado.
+                            Agrupa por estilo, talla y color para maximizar la eficiencia de tu taller.
+                        </p>
+                        <div className="flex gap-4">
+                            <button className="px-8 py-4 bg-slate-900 text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-pink-600 transition-all shadow-xl shadow-slate-900/10">
+                                Crear Nuevo Plan
+                            </button>
+                            <button className="px-8 py-4 bg-white border-2 border-slate-200 text-slate-900 font-black rounded-2xl text-xs uppercase tracking-widest hover:border-pink-600 hover:text-pink-600 transition-all">
+                                Ver Consolidado
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'cutting' && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-white p-20 rounded-[3rem] border-4 border-dashed border-slate-100 flex flex-col items-center text-center max-w-4xl mx-auto">
+                        <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-6">
+                            {/* @ts-ignore */}
+                            <Box size={40} />
+                        </div>
+                        <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-4 italic">Corte e <span className="text-blue-600">Inventario</span></h2>
+                        <p className="text-slate-500 font-medium leading-relaxed mb-8">
+                            Control crítico de tendido y corte. Este módulo gestiona la explosión de materiales real vs teórica,
+                            calculando exactamente el consumo de tela y la merma producida por cada tizado.
+                        </p>
+                        <div className="flex gap-4">
+                            <button className="px-8 py-4 bg-slate-900 text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/10">
+                                Iniciar Tizado
+                            </button>
+                            <button className="px-8 py-4 bg-white border-2 border-slate-200 text-slate-900 font-black rounded-2xl text-xs uppercase tracking-widest hover:border-blue-600 hover:text-blue-600 transition-all">
+                                Reporte de Merma
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {activeTab === 'services' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
                     <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden">
@@ -244,7 +295,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {services.map((os: any) => (
+                                    {(services || []).map((os: any) => (
                                         <tr key={os.id} className="hover:bg-slate-50/80 transition-all group">
                                             <td className="px-8 py-6 text-xs font-black text-slate-900">OS-{os.id.substring(0, 8).toUpperCase()}</td>
                                             <td className="px-8 py-6 font-bold text-slate-900">{os.supplier?.nombre_comercial}</td>
@@ -267,7 +318,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                             </td>
                                         </tr>
                                     ))}
-                                    {services.length === 0 && (
+                                    {(!services || services.length === 0) && (
                                         <tr>
                                             <td colSpan={7} className="px-8 py-20 text-center">
                                                 <div className="flex flex-col items-center gap-4 text-slate-300">
