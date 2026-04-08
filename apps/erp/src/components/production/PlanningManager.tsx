@@ -4,15 +4,16 @@ import { useState, useEffect } from "react"
 import {
     Calendar,
     Plus,
-    ChevronRight,
-    ClipboardList,
-    Clock,
     CheckCircle2,
-    Search
+    Search,
+    Printer,
+    ClipboardList,
+    ChevronRight
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import PrintableReport from "./PrintableReport"
 
 export default function PlanningManager() {
     const supabase = createClient()
@@ -21,6 +22,7 @@ export default function PlanningManager() {
     const [selectedPlan, setSelectedPlan] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [showAssignModal, setShowAssignModal] = useState(false)
+    const [showReport, setShowReport] = useState(false)
 
     useEffect(() => {
         fetchData()
@@ -47,12 +49,12 @@ export default function PlanningManager() {
                             )
                         )
                     `)
-                    .order('created_at', { ascending: false }),
+                    .order('created_at', { ascending: false }) as any,
                 supabase
                     .from('production_orders')
                     .select('id, numero_doc, total_prendas, estado')
                     .is('plan_id', null)
-                    .eq('estado', 'PENDIENTE')
+                    .eq('estado', 'PENDIENTE') as any
             ])
 
             if (plansRes.error) throw plansRes.error
@@ -72,7 +74,7 @@ export default function PlanningManager() {
         try {
             const { error } = await supabase
                 .from('production_orders')
-                .update({ plan_id: planId })
+                .update({ plan_id: planId } as any)
                 .in('id', orderIds)
 
             if (error) throw error
@@ -123,7 +125,7 @@ export default function PlanningManager() {
                                     fecha_inicio: new Date().toISOString().split('T')[0],
                                     fecha_fin: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                                     company_id: (company as any)?.id
-                                }])
+                                }] as any)
                                 if (error) toast.error("Error al crear")
                                 else fetchData()
                             }}
@@ -170,6 +172,13 @@ export default function PlanningManager() {
                             <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">{selectedPlan.nombre}</h2>
                             <p className="text-slate-500 text-sm font-medium">Consolidado operativo y explosión por lote.</p>
                         </div>
+                        <button
+                            onClick={() => setShowReport(true)}
+                            className="ml-auto flex items-center gap-2 px-6 py-3 bg-pink-600 hover:bg-pink-700 text-white font-black rounded-2xl shadow-xl transition-all uppercase text-[10px] tracking-widest"
+                        >
+                            <Printer size={16} />
+                            Generar Reporte
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -243,6 +252,15 @@ export default function PlanningManager() {
                         <button onClick={() => setShowAssignModal(false)} className="mt-8 w-full py-4 text-xs font-black uppercase text-slate-400 hover:text-slate-900 transition-colors">Cerrar</button>
                     </div>
                 </div>
+            )}
+
+            {/* Reporte Imprimible Overlay */}
+            {showReport && (
+                <PrintableReport
+                    plan={selectedPlan}
+                    consolidatedMaterials={calculateConsolidatedMaterials(selectedPlan)}
+                    onClose={() => setShowReport(false)}
+                />
             )}
         </div>
     )
