@@ -51,16 +51,45 @@ export default function RecipeManager({ products }: RecipeManagerProps) {
     }, [])
 
     const fetchRecipes = async () => {
-        const { data } = await (supabase
-            .from('recipes')
-            .select(`
-                *,
-                product:products(nombre, codigo),
-                recipe_items(*, material:materials(nombre, codigo)),
-                recipe_operations(*)
-            `)
-            .order('created_at', { ascending: false }) as any)
-        setRecipes(data || [])
+        try {
+            // Fetch everything in parallel to avoid Join errors on certain environments
+            const [recipesRes, itemsRes, opsRes, matsRes] = await Promise.all([
+                supabase.from('recipes').select('*, product:products(nombre, codigo)').order('created_at', { ascending: false }) as any,
+                supabase.from('recipe_items').select('*') as any,
+                supabase.from('recipe_operations').select('*') as any,
+                supabase.from('materials').select('nombre, codigo, id') as any
+            ])
+
+            if (recipesRes.error) throw recipesRes.error
+
+            const recipesData = recipesRes.data || []
+            const itemsData = itemsRes.data || []
+            const opsData = opsRes.data || []
+            const matsData = matsRes.data || []
+
+            // Join data manually in the client
+            const joinedRecipes = recipesData.map((recipe: any) => {
+                const recipeItems = itemsData
+                    .filter((item: any) => item.recipe_id === recipe.id)
+                    .map((item: any) => ({
+                        ...item,
+                        material: matsData.find((m: any) => m.id === item.material_id)
+                    }))
+
+                const recipeOps = opsData.filter((op: any) => op.recipe_id === recipe.id)
+
+                return {
+                    ...recipe,
+                    recipe_items: recipeItems,
+                    recipe_operations: recipeOps
+                }
+            })
+
+            setRecipes(joinedRecipes)
+        } catch (error: any) {
+            console.error("Error fetching recipes manually:", error)
+            toast.error("Error al cargar recetas")
+        }
     }
 
     const fetchMaterials = async () => {
@@ -193,25 +222,40 @@ export default function RecipeManager({ products }: RecipeManagerProps) {
         // Simple duplication logic
         toast.info("Duplicando receta...")
         try {
-            // Fetch detailed info
-            const { data: detailed } = await (supabase
-                .from('recipes')
-                .select('*, recipe_items(*), recipe_operations(*)')
-                .eq('id', recipe.id)
-                .single() as any)
+            // Fetch detailed info manually to avoid Join issues
+            const [recipeRes, itemsRes, opsRes] = await Promise.all([
+                supabase.from('recipes').select('*').eq('id', recipe.id).single() as any,
+                supabase.from('recipe_items').select('*').eq('recipe_id', recipe.id) as any,
+                supabase.from('recipe_operations').select('*').eq('recipe_id', recipe.id) as any
+            ])
 
-            if (detailed) {
+            if (recipeRes.data) {
+                const detailed = recipeRes.data
+                const items = itemsRes.data || []
+                const ops = opsRes.data || []
+
                 const { data: newRecipe } = await (supabase.from('recipes').insert([{
-                    ...detailed,
-                    id: undefined,
-                    created_at: undefined,
+                    product_id: detailed.product_id,
                     descripcion: `${detailed.descripcion} (Copia)`,
+                    costos_indirectos: detailed.costos_indirectos,
+                    merma_default: detailed.merma_default,
                     estado: 'BORRADOR'
                 }]).select().single() as any)
 
                 if (newRecipe) {
-                    await (supabase.from('recipe_items').insert(detailed.recipe_items.map((i: any) => ({ ...i, id: undefined, recipe_id: newRecipe.id }))) as any)
-                    await (supabase.from('recipe_operations').insert(detailed.recipe_operations.map((o: any) => ({ ...o, id: undefined, recipe_id: newRecipe.id }))) as any)
+                    await (supabase.from('recipe_items').insert(items.map((i: any) => ({
+                        recipe_id: newRecipe.id,
+                        material_id: i.material_id,
+                        cantidad: i.cantidad,
+                        merma_porcentaje: i.merma_porcentaje
+                    }))) as any)
+
+                    await (supabase.from('recipe_operations').insert(ops.map((o: any) => ({
+                        recipe_id: newRecipe.id,
+                        tipo_operacion: o.tipo_operacion,
+                        costo_base: o.costo_base
+                    }))) as any)
+
                     toast.success("Receta duplicada (en modo borrador)")
                     fetchRecipes()
                 }
