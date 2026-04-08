@@ -319,15 +319,15 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                 <tbody className="divide-y divide-slate-100">
                                     {(services || []).map((os: any) => (
                                         <tr key={os.id} className="hover:bg-slate-50/80 transition-all group">
-                                            <td className="px-8 py-6 text-xs font-black text-slate-900">OS-{os.id.substring(0, 8).toUpperCase()}</td>
-                                            <td className="px-8 py-6 font-bold text-slate-900">{os.supplier?.nombre_comercial}</td>
+                                            <td className="px-8 py-6 text-xs font-black text-slate-900">OS-{os.numero_os}</td>
+                                            <td className="px-8 py-6 font-bold text-slate-900">{os.supplier?.nombre_comercial || os.supplier?.razon_social}</td>
                                             <td className="px-8 py-6">
                                                 <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase">{os.tipo_servicio}</span>
                                             </td>
-                                            <td className="px-8 py-6 text-xs font-black text-slate-500 italic">OP #{os.op?.numero_doc}</td>
+                                            <td className="px-8 py-6 text-xs font-black text-slate-500 italic">OP #{os.op?.numero_doc || 'N/A'}</td>
                                             <td className="px-8 py-6 text-sm font-black text-slate-900 text-right">S/ {os.total_costo?.toFixed(2)}</td>
                                             <td className="px-8 py-6 text-xs text-slate-500 font-bold uppercase tracking-tighter">
-                                                {os.fecha_entrega_est ? new Date(os.fecha_entrega_est).toLocaleDateString('es-PE') : 'N/A'}
+                                                {os.fecha_entrega ? new Date(os.fecha_entrega).toLocaleDateString('es-PE') : 'N/A'}
                                             </td>
                                             <td className="px-8 py-6">
                                                 <span className={cn(
