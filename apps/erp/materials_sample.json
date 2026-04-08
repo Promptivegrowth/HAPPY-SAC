@@ -1,0 +1,24 @@
+[
+  {
+    "id": "446fec4a-080d-4fcb-8bb1-dd8ebc754bcb",
+    "company_id": "24b7a942-8a5a-434f-beac-d6fd222702ba",
+    "codigo": "MAT-TELA-001",
+    "nombre": "Tela Poliseda Roja",
+    "descripcion": null,
+    "clasificacion": "TELA",
+    "categoria_id": "ac1540ca-9329-4ad8-9bde-4484229b4d3b",
+    "unidad_id": "35ba3ce1-504d-4053-9318-9ff0243f30e9",
+    "stock_min": 0,
+    "stock_max": null,
+    "punto_reorden": 0,
+    "precio_compra_prom": 5.5,
+    "precio_compra_ult": 0,
+    "proveedor_pref_id": null,
+    "codigo_barras": null,
+    "notas": null,
+    "activo": true,
+    "created_at": "2026-04-07T15:06:58.671424+00:00",
+    "updated_at": "2026-04-07T15:06:58.671424+00:00",
+    "created_by": null
+  }
+]

@@ -1,0 +1,1 @@
+["id","company_id","codigo","nombre","descripcion","clasificacion","categoria_id","unidad_id","stock_min","stock_max","punto_reorden","precio_compra_prom","precio_compra_ult","proveedor_pref_id","codigo_barras","notas","activo","created_at","updated_at","created_by"]

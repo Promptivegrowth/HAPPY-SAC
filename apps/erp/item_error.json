@@ -1,0 +1,11 @@
+{
+  "status": 409,
+  "recipe_id": "e2f2084e-adea-423c-a7a9-bd2d7e720eb8",
+  "material_id": "30556f35-5cd3-46ea-9100-50b12e11c293",
+  "response": {
+    "code": "23503",
+    "details": "Key (material_id)=(30556f35-5cd3-46ea-9100-50b12e11c293) is not present in table \"materials\".",
+    "hint": null,
+    "message": "insert or update on table \"recipe_items\" violates foreign key constraint \"recipe_items_material_id_fkey\""
+  }
+}

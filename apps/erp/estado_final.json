@@ -1,0 +1,24 @@
+{
+  "inventario_total": 11,
+  "inventario_con_stock": [
+    {
+      "nombre": "Tela Poliseda Roja",
+      "talla": null,
+      "stock": 300,
+      "unidad": "MTS"
+    },
+    {
+      "nombre": "Disfraz Spiderman Cl�sico",
+      "talla": "4",
+      "stock": 20,
+      "unidad": "UNI"
+    }
+  ],
+  "fichas_tecnicas": 2,
+  "fichas_detalle": [
+    "Ficha Técnica — Disfraz Spiderman Clásico Talla T4",
+    "Ficha Técnica — Disfraz Spiderman Clásico Talla T6"
+  ],
+  "insumos_en_recetas": 0,
+  "operaciones": 16
+}
