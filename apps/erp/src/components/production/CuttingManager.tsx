@@ -11,12 +11,14 @@ import {
     Trash2,
     Save
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 export default function CuttingManager() {
     const supabase = createClient()
+    const router = useRouter()
     const [pendingOrders, setPendingOrders] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState<any>(null)
@@ -32,7 +34,11 @@ export default function CuttingManager() {
             const { data, error } = await supabase
                 .from('production_orders')
                 .select(`
-                    *,
+                    id,
+                    numero_doc,
+                    total_prendas,
+                    estado,
+                    created_at,
                     items:production_order_items (
                         id,
                         product:products (id, nombre, codigo)
@@ -48,7 +54,13 @@ export default function CuttingManager() {
                 .order('created_at', { ascending: true })
 
             if (error) throw error
-            setPendingOrders(data || [])
+
+            // Unificar por numero_doc para evitar duplicados visuales en la lista lateral
+            const uniqueOrders = data?.filter((order, index, self) =>
+                index === self.findIndex((o) => o.numero_doc === order.numero_doc)
+            )
+
+            setPendingOrders(uniqueOrders || [])
         } catch (err) {
             console.error(err)
             toast.error("Error al cargar órdenes para corte")
@@ -60,6 +72,7 @@ export default function CuttingManager() {
     const handleSelectOrder = (order: any) => {
         setSelectedOrder(order)
         // Inicializar datos de corte con los materiales de la explosión
+        // @ts-ignore
         const initialUsage = (order.materials || []).map((m: any) => ({
             material_id: m.material_id,
             nombre: m.material?.nombre,
@@ -99,12 +112,13 @@ export default function CuttingManager() {
 
             if (opError) throw opError
 
-            toast.success("Corte registrado y OP movida a PROCESO")
+            toast.success("Corte registrado y movido a PROCESO")
             setSelectedOrder(null)
             fetchPendingOrders()
+            router.refresh() // Sincronizar el monitor principal
         } catch (err) {
             console.error(err)
-            toast.error("Error al registrar el corte")
+            toast.error("Error al registrar")
         }
     }
 
