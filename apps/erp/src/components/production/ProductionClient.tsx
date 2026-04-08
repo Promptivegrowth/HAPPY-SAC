@@ -16,6 +16,8 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 import RecipeManager from "@/components/production/RecipeManager"
 import ServiceOrderModal from "@/components/production/ServiceOrderModal"
 
@@ -27,11 +29,30 @@ interface ProductionClientProps {
 }
 
 export default function ProductionClient({ initialOrders, initialServices, products, activeTab: defaultTab }: ProductionClientProps) {
+    const supabase = createClient()
     const [activeTab, setActiveTab] = useState(defaultTab)
     const [orders, setOrders] = useState(initialOrders)
     const [services, setServices] = useState(initialServices)
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedOPForOS, setSelectedOPForOS] = useState<any>(null)
+
+    const handleCancelOS = async (osId: string) => {
+        if (!confirm("¿Estás seguro de cancelar esta Orden de Servicio?")) return
+
+        try {
+            const { error } = await (supabase
+                .from('service_orders')
+                .update({ estado: 'CANCELADO' })
+                .eq('id', osId) as any)
+
+            if (error) throw error
+
+            setServices(prev => prev.map(s => s.id === osId ? { ...s, estado: 'CANCELADO' } : s))
+            toast.success("Orden de Servicio cancelada")
+        } catch (error: any) {
+            toast.error("Error al cancelar OS", { description: error.message })
+        }
+    }
 
     const filteredOrders = (orders || []).filter(o =>
         o.numero_doc?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -292,6 +313,7 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                         <th className="px-8 py-5 text-right">Costo Pactado</th>
                                         <th className="px-8 py-5">Entrega</th>
                                         <th className="px-8 py-5">Estado</th>
+                                        <th className="px-8 py-5"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -312,15 +334,26 @@ export default function ProductionClient({ initialOrders, initialServices, produ
                                                     "inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest leading-none",
                                                     os.estado === 'PENDIENTE' && "bg-amber-50 text-amber-600 border border-amber-100",
                                                     os.estado === 'RECIBIDO' && "bg-emerald-50 text-emerald-600 border border-emerald-100",
+                                                    os.estado === 'CANCELADO' && "bg-rose-50 text-rose-600 border border-rose-100",
                                                 )}>
                                                     {os.estado}
                                                 </span>
+                                            </td>
+                                            <td className="px-8 py-6 text-right">
+                                                {os.estado === 'PENDIENTE' && (
+                                                    <button
+                                                        onClick={() => handleCancelOS(os.id)}
+                                                        className="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[9px] font-black uppercase hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                                                    >
+                                                        Cancelar
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
                                     {(!services || services.length === 0) && (
                                         <tr>
-                                            <td colSpan={7} className="px-8 py-20 text-center">
+                                            <td colSpan={8} className="px-8 py-20 text-center">
                                                 <div className="flex flex-col items-center gap-4 text-slate-300">
                                                     {/* @ts-ignore */}
                                                     <Truck size={48} />

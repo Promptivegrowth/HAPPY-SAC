@@ -50,7 +50,12 @@ export default function ServiceOrderModal({ isOpen, onClose, productionOrder }: 
     }, [isOpen])
 
     const fetchSuppliers = async () => {
-        const { data } = await supabase.from('suppliers').select('*').order('nombre_comercial')
+        const { data } = await supabase
+            .from('suppliers')
+            .select('*')
+            .contains('tipo', ['TALLER'])
+            .eq('activo', true)
+            .order('razon_social')
         setSuppliers(data || [])
     }
 
@@ -79,7 +84,7 @@ export default function ServiceOrderModal({ isOpen, onClose, productionOrder }: 
 
         try {
             // 1. Create OS
-            const { data: os, error: osError } = await supabase
+            const { data: os, error: osError } = await (supabase
                 .from('service_orders')
                 .insert([{
                     op_id: productionOrder.id,
@@ -91,7 +96,7 @@ export default function ServiceOrderModal({ isOpen, onClose, productionOrder }: 
                     estado: 'PENDIENTE'
                 }])
                 .select()
-                .single()
+                .single() as any)
 
             if (osError) throw osError
 
@@ -102,7 +107,7 @@ export default function ServiceOrderModal({ isOpen, onClose, productionOrder }: 
                     material_id: a.material_id,
                     cantidad_entregada: a.cantidad
                 }))
-                await supabase.from('service_order_materials').insert(aviosToInsert)
+                await (supabase.from('service_order_materials').insert(aviosToInsert) as any)
             }
 
             toast.success("Orden de Servicio generada exitosamente")
@@ -151,7 +156,7 @@ export default function ServiceOrderModal({ isOpen, onClose, productionOrder }: 
                                     className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
                                 >
                                     <option value="">Seleccionar taller...</option>
-                                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.nombre_comercial}</option>)}
+                                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.nombre_comercial || s.razon_social}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
